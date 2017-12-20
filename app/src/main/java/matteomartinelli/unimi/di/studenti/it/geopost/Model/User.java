@@ -1,5 +1,9 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.Model;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
+
 /**
  * Created by utente2.academy on 12/19/2017.
  */
@@ -7,9 +11,9 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Model;
 public class User {
     private String userName;
     private String ultimoMessaggio;
-    private String posizione; //TODO: trovare dataType coerente
+    private ArrayList<UserState> userStates;
     private String cookie;
-
+    private LatLng currentPosition;
     public String getCookie() {
         return cookie;
     }
@@ -18,10 +22,10 @@ public class User {
         this.cookie = cookie;
     }
 
-    public User(String userName, String ultimoMessaggio, String posizione, String cookie) {
+    public User(String userName, String ultimoMessaggio, ArrayList<UserState> userStates, String cookie) {
         this.userName = userName;
         this.ultimoMessaggio = ultimoMessaggio;
-        this.posizione = posizione;
+        this.userStates = userStates;
         this.cookie = cookie;
 
     }
@@ -45,11 +49,19 @@ public class User {
         this.ultimoMessaggio = ultimoMessaggio;
     }
 
-    public String getPosizione() {
-        return posizione;
+    public ArrayList<UserState> getUserStates() {
+        return userStates;
     }
 
-    public void setPosizione(String posizione) {
-        this.posizione = posizione;
+    public void setUserStates(ArrayList<UserState> userStates) {
+        this.userStates = userStates;
+    }
+
+    public LatLng getCurrentPosition() {
+        return currentPosition;
+    }
+
+    public void setCurrentPosition(LatLng currentPosition) {
+        this.currentPosition = currentPosition;
     }
 }
