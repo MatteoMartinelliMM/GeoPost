@@ -28,7 +28,6 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
     private String sUsername,sPwd;
 
 
-    @SuppressLint("ResourceAsColor")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

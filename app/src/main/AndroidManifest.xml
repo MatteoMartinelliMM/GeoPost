@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="matteomartinelli.unimi.di.studenti.it.geopost">
     <uses-permission android:name="android.permission.INTERNET" />
-
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -23,6 +24,9 @@
         <activity
             android:name=".View.OverviewActivity"
             android:label="@string/title_activity_overview" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCCDjM40uXNWLrv5m857LMDdkaShxW2go0" />
     </application>
 
 </manifest>

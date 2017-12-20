@@ -1,23 +1,17 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.app.ActionBar;
-import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.drm.DrmStore;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
@@ -37,7 +31,7 @@ public class OverviewActivity extends AppCompatActivity {
     private BottomNavigationView navigation;
     private UsersListFragment listFragment;
     private PersonalProfileFragment profileFragment;
-    private MapFragment mapFragment;
+    private MapFragmentContainer mapFragment;
     private float x1, x2, y1, y2;
     private ActionBar actionBar;
 
@@ -59,7 +53,7 @@ public class OverviewActivity extends AppCompatActivity {
                     return true;
                 case R.id.navigation_map:
                     getSupportActionBar().hide();
-                    MapFragment mapFragment = new MapFragment();
+                    MapFragmentContainer mapFragment = new MapFragmentContainer();
                     ft = fm.beginTransaction();
                     if (start)
                         ft.replace(R.id.fragContainer, mapFragment, PROFILE + "|" + USERS_LIST);
@@ -93,7 +87,7 @@ public class OverviewActivity extends AppCompatActivity {
 
         listFragment = new UsersListFragment();
         profileFragment = new PersonalProfileFragment();
-        mapFragment = new MapFragment();
+        mapFragment = new MapFragmentContainer();
 
         navigation.setSelectedItemId(R.id.navigation_map);
         start = true;

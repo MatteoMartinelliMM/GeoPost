@@ -1,24 +1,23 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 
-public class MapFragment extends Fragment {
+public class MapFragmentContainer extends Fragment implements OnMapReadyCallback{
     View v;
-
-    public MapFragment() {
+    private MapFragment mapFragment;
+    public MapFragmentContainer() {
         // Required empty public constructor
     }
 
@@ -34,6 +33,7 @@ public class MapFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         v = inflater.inflate(R.layout.fragment_map, container, false);
+        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.mapFragment);
         // Inflate the layout for this fragment
         return v;
     }
@@ -52,5 +52,8 @@ public class MapFragment extends Fragment {
     }
 
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
 
+    }
 }
