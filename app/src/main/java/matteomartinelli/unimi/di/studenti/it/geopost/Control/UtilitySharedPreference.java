@@ -15,7 +15,7 @@ public class UtilitySharedPreference {
 
     public static final String LOGGED_USER = "LoggedUser";
     public static final String USER_POST = "UserPost";
-
+    public static final String COOKIE = "Cookie";
 
 
     public static boolean checkIfUserIsLogged(Context context) {
@@ -27,6 +27,7 @@ public class UtilitySharedPreference {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(LOGGED_USER, u.getUserName());
+        editor.putString(COOKIE, u.getCookie());
         editor.commit();
     }
 
@@ -34,6 +35,14 @@ public class UtilitySharedPreference {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         return preferences.getString(LOGGED_USER, "");
     }
+
+     public static void getSavedCookie(Context context,String cookie){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(COOKIE, cookie);
+        editor.commit();
+    }
+
 
 
 }

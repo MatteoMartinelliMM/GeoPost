@@ -8,11 +8,22 @@ public class User {
     private String userName;
     private String ultimoMessaggio;
     private String posizione; //TODO: trovare dataType coerente
+    private String cookie;
 
-    public User(String userName, String ultimoMessaggio, String posizione) {
+    public String getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
+    }
+
+    public User(String userName, String ultimoMessaggio, String posizione, String cookie) {
         this.userName = userName;
         this.ultimoMessaggio = ultimoMessaggio;
         this.posizione = posizione;
+        this.cookie = cookie;
+
     }
 
     public User() {
