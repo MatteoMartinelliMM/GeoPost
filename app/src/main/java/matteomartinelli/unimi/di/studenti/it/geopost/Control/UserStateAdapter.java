@@ -42,14 +42,13 @@ public class UserStateAdapter extends RecyclerView.Adapter<UserStateAdapter.View
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public CardView storyLine;
-        public TextView stato, posizione,presso;
+        public TextView stato, posizione;
 
         public ViewHolder(View v) {
             super(v);
             storyLine = itemView.findViewById(R.id.storyLine);
             stato = v.findViewById(R.id.oldStatus);
             posizione = v.findViewById(R.id.oldPosition);
-            presso = v.findViewById(R.id.presso);
         }
     }
 
@@ -77,7 +76,6 @@ public class UserStateAdapter extends RecyclerView.Adapter<UserStateAdapter.View
         String address = Geocoding.getAdressFromCoord(stato, context);
         holder.stato.setText(sStato);
         holder.posizione.setText(address);
-        holder.presso.setText("PRESSO: ");
     }
 
     @Override

@@ -86,7 +86,7 @@ public class PersonalProfileFragment extends Fragment {
         stato4 = new UserState(latLng,"Buongiorno a tutti questo è bensì già il mio 4 stato nonostante non m" +
                 "i piacciano i social puntoi virgola fine");
         latLng = new LatLng(44.533674, 11.231393);
-        stato5 = new UserState(latLng,"hei bebi");
+        stato5 = new UserState(latLng,"ei bebi");
         states.add(0,stato1);
         states.add(0,stato2);
         states.add(0,stato3);
