@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 public class User {
     private String userName;
-    private String ultimoMessaggio;
     private ArrayList<UserState> userStates;
     private String cookie;
     private LatLng currentPosition;
@@ -22,9 +21,8 @@ public class User {
         this.cookie = cookie;
     }
 
-    public User(String userName, String ultimoMessaggio, ArrayList<UserState> userStates, String cookie) {
+    public User(String userName, ArrayList<UserState> userStates, String cookie) {
         this.userName = userName;
-        this.ultimoMessaggio = ultimoMessaggio;
         this.userStates = userStates;
         this.cookie = cookie;
 
@@ -41,13 +39,6 @@ public class User {
         this.userName = userName;
     }
 
-    public String getUltimoMessaggio() {
-        return ultimoMessaggio;
-    }
-
-    public void setUltimoMessaggio(String ultimoMessaggio) {
-        this.ultimoMessaggio = ultimoMessaggio;
-    }
 
     public ArrayList<UserState> getUserStates() {
         return userStates;

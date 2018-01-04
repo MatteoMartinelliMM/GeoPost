@@ -31,4 +31,6 @@ public class Friend {
     public void setStato(UserState stato) {
         this.stato = stato;
     }
+
+
 }

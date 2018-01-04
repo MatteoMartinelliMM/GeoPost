@@ -1,6 +1,6 @@
-package matteomartinelli.unimi.di.studenti.it.geopost;
+package matteomartinelli.unimi.di.studenti.it.geopost.Control;
 
-import android.content.Intent;
+import android.location.Location;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.ArrayList;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.Friend;
+import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 /**
  * Created by utente2.academy on 12/20/2017.
@@ -21,13 +22,18 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Model.Friend;
 
 public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHolder> {
     ArrayList<Friend> amici;
+    Location myLocation;
 
     public UserListAdapter(String classCaller) {
         amici = new ArrayList<Friend>();
+
     }
 
     public UserListAdapter(ArrayList<Friend> amici) {
         this.amici = amici;
+        myLocation = new Location("MY LOCATION");
+        myLocation.setLatitude(45.547604);
+        myLocation.setLongitude(9.254777);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -59,6 +65,15 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
         String sUsername = friend.getUsername();
         String sStato = friend.getStato().getStato();
         LatLng latLng = friend.getStato().getLatLng();
+        Location friendLocation = new Location("FRIEND LOCATION");
+        friendLocation.setLatitude(latLng.latitude);
+        friendLocation.setLongitude(latLng.longitude);
+        float distance = myLocation.distanceTo(friendLocation)/1000;
+
+        holder.username.setText(sUsername);
+        holder.stato.setText(sStato);
+        if(distance>=2)
+            holder.posizione.setText(String.format("%.2f",distance)+" km");
 
     }
 
