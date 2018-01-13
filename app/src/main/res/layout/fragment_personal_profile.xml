@@ -68,34 +68,31 @@
                 android:text="Via Martiri delle Foibe 11, Sesto San Giovanni"
                 android:textSize="14sp" />
 
-            <RelativeLayout
-                android:id="@+id/relativeLayout2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_below="@+id/lastPosition"
-                android:layout_marginTop="10dp"
-                android:elevation="@dimen/cardview_compat_inset_shadow">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"
-                    android:layout_marginStart="11dp"
-                    android:text="POST"
-                    android:textColor="@color/colorPrimary"
-                    android:textSize="16sp" />
-
-            </RelativeLayout>
-
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/oldPost"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_alignParentStart="true"
-                android:layout_below="@+id/relativeLayout2" />
+                android:layout_below="@+id/tabLayout" />
 
+            <android.support.design.widget.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/proPic"
+                android:layout_centerHorizontal="true">
+
+
+                <android.support.design.widget.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="History" />
+
+                <android.support.design.widget.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Map" />
+            </android.support.design.widget.TabLayout>
 
 
         </RelativeLayout>

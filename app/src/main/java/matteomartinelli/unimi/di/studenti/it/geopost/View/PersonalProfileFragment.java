@@ -1,11 +1,16 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -17,6 +22,7 @@ import java.util.ArrayList;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserStateAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.Friend;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
@@ -28,6 +34,9 @@ public class PersonalProfileFragment extends Fragment {
     private RecyclerView storyLine;
     private RecyclerView.LayoutManager lm;
     private UserStateAdapter userStateAdapter;
+    private boolean done;
+    private Context context;
+    private Activity currentActitvity;
    public PersonalProfileFragment() {
         // Required empty public constructor
     }
@@ -47,6 +56,8 @@ public class PersonalProfileFragment extends Fragment {
         userState = v.findViewById(R.id.userState);
         lastPosition = v.findViewById(R.id.lastPosition);
         storyLine = v.findViewById(R.id.oldPost);
+        currentActitvity = getActivity();
+        context = getActivity();
         lm = new LinearLayoutManager(v.getContext());
         init();
         if(!states.isEmpty()){
@@ -93,5 +104,26 @@ public class PersonalProfileFragment extends Fragment {
         states.add(0,stato4);
         states.add(0,stato5);
 
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        getActivity().getMenuInflater().inflate(R.menu.menu_logout, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.logout:
+                done = UtilitySharedPreference.logoutTheCurrentUser(context);
+                Intent intent = new Intent(context, LoginActivity.class);
+                startActivity(intent);
+                currentActitvity.finish();
+                break;
+            default:
+                break;
+        }
+        return true;
     }
 }

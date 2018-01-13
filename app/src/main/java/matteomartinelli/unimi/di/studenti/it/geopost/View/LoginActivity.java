@@ -1,6 +1,7 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
     private User loggedUser;
     private TaskDelegate delegate;
     private String sUsername,sPwd;
+    private ProgressDialog dialog;
 
 
     @Override
@@ -37,6 +39,7 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
         password = findViewById(R.id.password);
         delegate = this;
         loggedUser = new User();
+        dialog = new ProgressDialog(this);
 
     }
 
@@ -46,6 +49,7 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
         final RequestParams loginParams = new RequestParams();
         loginParams.put("username", sUsername);
         loginParams.put("password", sPwd);
+        dialog.onStart();
         RestCall.post("/login", loginParams, new AsyncHttpResponseHandler() {
             String cookie;
 
@@ -77,6 +81,8 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
 
     @Override
     public void waitToComplete(String s) {
+        dialog.dismiss();
+        dialog.cancel();
         if (s.equals("400"))
             Toast.makeText(getApplicationContext(), "Wrong Username or Password", Toast.LENGTH_SHORT).show();
         else {

@@ -44,5 +44,11 @@ public class UtilitySharedPreference {
     }
 
 
-
+    public static boolean logoutTheCurrentUser(Context context) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.commit();
+        return checkIfUserIsLogged(context);
+    }
 }
