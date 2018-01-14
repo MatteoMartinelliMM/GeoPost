@@ -2,15 +2,17 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Model;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by utente2.academy on 12/19/2017.
  */
 
-public class User {
+public class User implements Serializable{
     private String userName;
     private ArrayList<UserState> userStates;
+    private UserState lastState;
     private String cookie;
     private LatLng currentPosition;
     public String getCookie() {
@@ -54,5 +56,13 @@ public class User {
 
     public void setCurrentPosition(LatLng currentPosition) {
         this.currentPosition = currentPosition;
+    }
+
+    public UserState getLastState() {
+        return lastState;
+    }
+
+    public void setLastState(UserState lastState) {
+        this.lastState = lastState;
     }
 }

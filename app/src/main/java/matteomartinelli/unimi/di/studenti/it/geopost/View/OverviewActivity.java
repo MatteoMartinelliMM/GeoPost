@@ -3,6 +3,7 @@ package matteomartinelli.unimi.di.studenti.it.geopost.View;
 import android.app.ActionBar;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -12,14 +13,26 @@ import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpResponseHandler;
+
+import java.util.ArrayList;
+
+import cz.msebera.android.httpclient.Header;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static android.view.KeyEvent.ACTION_DOWN;
 import static android.view.KeyEvent.ACTION_UP;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOWER;
 
 
-public class OverviewActivity extends AppCompatActivity {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate {
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -34,6 +47,10 @@ public class OverviewActivity extends AppCompatActivity {
     private MapFragmentContainer mapFragment;
     private float x1, x2, y1, y2;
     private ActionBar actionBar;
+    private ProgressDialog dialog;
+    private TaskDelegate delegate;
+    private String toParse;
+    private ArrayList<User> friendList;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -88,9 +105,31 @@ public class OverviewActivity extends AppCompatActivity {
         listFragment = new UsersListFragment();
         profileFragment = new PersonalProfileFragment();
         mapFragment = new MapFragmentContainer();
+        friendList = new ArrayList<>();
+        delegate = this;
+        String userCookie = UtilitySharedPreference.getSavedCookie(this);
+        dialog = new ProgressDialog(this);
+        dialog.onStart();
+        RestCall.get(REL_URL_FOLLOWER+userCookie, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if(statusCode==200){
+                    toParse = new String(responseBody);
 
-        navigation.setSelectedItemId(R.id.navigation_map);
-        start = true;
+                }
+                delegate.waitToComplete(statusCode+"");
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                if(statusCode==400) delegate.waitToComplete("Error "+ statusCode );
+
+
+
+            }
+        });
+
+
     }
 
     @Override
@@ -136,6 +175,19 @@ public class OverviewActivity extends AppCompatActivity {
     private void hidingTheTitleBar() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+    }
+
+    @Override
+    public void waitToComplete(String s) {
+        dialog.dismiss();
+        dialog.cancel();
+        if(s.equals("200")){
+            friendList = (ArrayList<User>) JSONParser.getFollowedUsers(toParse);
+        }else
+            Toast.makeText(this,s,Toast.LENGTH_SHORT).show();
+        navigation.setSelectedItemId(R.id.navigation_map);
+        start = true;
 
     }
 }

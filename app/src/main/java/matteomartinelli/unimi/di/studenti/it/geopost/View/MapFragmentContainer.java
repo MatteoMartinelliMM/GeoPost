@@ -15,6 +15,7 @@ import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -24,12 +25,19 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestHandle;
+import com.loopj.android.http.RequestParams;
+
+import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
+
 
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOWER;
 
@@ -41,8 +49,11 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private Activity currentActivity;
     private MapFragment mapFragment;
     private ProgressDialog dialog;
+    private TaskDelegate delegate;
+    private ArrayList<User> friendList;
     public static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION =1;
     private FloatingActionButton addStatus;
+    private String toParse;
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -51,22 +62,9 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String userCookie = UtilitySharedPreference.getSavedCookie(context);
+        friendList = new ArrayList<>();
+        delegate = this;
 
-
-        RestCall.get(REL_URL_FOLLOWER + userCookie +".json", null, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                if(statusCode==200){
-                    String toParse = new String(responseBody);
-                }
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-
-            }
-        });
 
 
 
@@ -75,8 +73,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
-        dialog = new ProgressDialog(getActivity());
-        dialog.onStart();
+
+
         // Inflate the layout for this fragment
         return v;
     }
@@ -128,6 +126,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         }
         mapFragment.getMapAsync(this);
 
+
+
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -165,8 +165,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public void waitToComplete(String s) {
-        dialog.dismiss();
-        dialog.cancel();
+
 
     }
 

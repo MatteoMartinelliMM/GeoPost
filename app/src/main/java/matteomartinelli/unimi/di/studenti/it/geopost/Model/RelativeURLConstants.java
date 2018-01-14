@@ -6,5 +6,6 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Model;
 
 public class RelativeURLConstants {
     public static final String REL_URL_FOLLOWER = "followed?session_id=";
-    public static final String REL_URL_LOGIN = "/login";
+    public static final String REL_URL_LOGIN = "login";
+
 }

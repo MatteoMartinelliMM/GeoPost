@@ -2,11 +2,13 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Model;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.Serializable;
+
 /**
  * Created by utente2.academy on 12/20/2017.
  */
 
-public class UserState {
+public class UserState implements Serializable{
     private LatLng latLng;
     private String stato;
 

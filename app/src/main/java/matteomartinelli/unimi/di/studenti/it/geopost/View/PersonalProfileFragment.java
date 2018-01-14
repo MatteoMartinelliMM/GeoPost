@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserStateAdapter;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.Friend;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
@@ -59,6 +58,7 @@ public class PersonalProfileFragment extends Fragment {
         currentActitvity = getActivity();
         context = getActivity();
         lm = new LinearLayoutManager(v.getContext());
+        setHasOptionsMenu(true);
         init();
         if(!states.isEmpty()){
             UserState stato = states.get(0);

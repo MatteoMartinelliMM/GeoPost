@@ -13,7 +13,6 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.Friend;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 /**

@@ -9,7 +9,7 @@ import com.loopj.android.http.RequestParams;
  */
 
 public class RestCall {
-    private static final String BASE_URL = "https://ewserver.di.unimi.it/mobicomp/geopost";
+    private static final String BASE_URL = "https://ewserver.di.unimi.it/mobicomp/geopost/";
     private static AsyncHttpClient client = new AsyncHttpClient();
 
     public static void get(String url, RequestParams params ,AsyncHttpResponseHandler asyncHttpResponseHandler) {
