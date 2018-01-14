@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.loopj.android.http.AsyncHttpResponseHandler;
+
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 
 /**
@@ -36,11 +38,9 @@ public class UtilitySharedPreference {
         return preferences.getString(LOGGED_USER, "");
     }
 
-     public static void getSavedCookie(Context context,String cookie){
+     public static String getSavedCookie(Context context){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(COOKIE, cookie);
-        editor.commit();
+        return preferences.getString(COOKIE,"");
     }
 
 
@@ -51,4 +51,6 @@ public class UtilitySharedPreference {
         editor.commit();
         return checkIfUserIsLogged(context);
     }
+
+
 }

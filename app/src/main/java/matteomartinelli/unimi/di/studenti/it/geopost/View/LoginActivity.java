@@ -2,6 +2,7 @@ package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,7 +23,10 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPrefer
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGIN;
+
 public class LoginActivity extends AppCompatActivity implements TaskDelegate {
+
     private EditText userName, password;
     private User loggedUser;
     private TaskDelegate delegate;
@@ -50,7 +54,7 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
         loginParams.put("username", sUsername);
         loginParams.put("password", sPwd);
         dialog.onStart();
-        RestCall.post("/login", loginParams, new AsyncHttpResponseHandler() {
+        RestCall.post(REL_URL_LOGIN, loginParams, new AsyncHttpResponseHandler() {
             String cookie;
 
             @Override

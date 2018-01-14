@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -22,18 +23,26 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 
+import cz.msebera.android.httpclient.Header;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOWER;
 
-public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate {
+
+public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate, View.OnClickListener {
+
     View v;
     private Context context;
     private Activity currentActivity;
     private MapFragment mapFragment;
     private ProgressDialog dialog;
     public static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION =1;
+    private FloatingActionButton addStatus;
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -42,6 +51,22 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String userCookie = UtilitySharedPreference.getSavedCookie(context);
+
+
+        RestCall.get(REL_URL_FOLLOWER + userCookie +".json", null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if(statusCode==200){
+                    String toParse = new String(responseBody);
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+
+            }
+        });
 
 
 
@@ -49,13 +74,20 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        v = inflater.inflate(R.layout.fragment_map, container, false);
-        mapFragment = (MapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
+        settingTheContextNView(inflater, container);
         dialog = new ProgressDialog(getActivity());
-        context = getActivity();
-        currentActivity = getActivity();
+        dialog.onStart();
         // Inflate the layout for this fragment
         return v;
+    }
+
+    private void settingTheContextNView(LayoutInflater inflater, ViewGroup container) {
+        v = inflater.inflate(R.layout.fragment_map, container, false);
+        addStatus = v.findViewById(R.id.addStatus);
+        addStatus.setOnClickListener(this);
+        mapFragment = (MapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
+        context = getActivity();
+        currentActivity = getActivity();
     }
 
 
@@ -135,6 +167,11 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     public void waitToComplete(String s) {
         dialog.dismiss();
         dialog.cancel();
+
+    }
+
+    @Override
+    public void onClick(View v) {
 
     }
 }
