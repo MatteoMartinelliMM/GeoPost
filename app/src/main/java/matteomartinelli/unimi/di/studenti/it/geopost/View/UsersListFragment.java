@@ -19,14 +19,22 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+
+import android.location.Location;
+
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserListAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
+import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
+
 public class UsersListFragment extends Fragment {
-    private Friend amico1, amico2;
-    private ArrayList<Friend> amici;
-    private UserState stato1, stato2;
+    private User personalProfile;
+    private ArrayList<User> friendList;
+    private UserBundleToSave userBundle;
     private UserListAdapter userListAdapter;
     private RecyclerView userList;
     private RecyclerView.LayoutManager lm;
@@ -43,26 +51,46 @@ public class UsersListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        userBundle = new UserBundleToSave();
+        friendList = new ArrayList<>();
+        personalProfile = new User();
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_users_list, container, false);
-        init();
 
-        userList = v.findViewById(R.id.userList);
-        lm = new LinearLayoutManager(v.getContext());
-        userList.setLayoutManager(lm);
-        userListAdapter = new UserListAdapter(amici);
-        userList.setAdapter(userListAdapter);
+        hidingTheSearchBar(v);
+
+        setHasOptionsMenu(true);
+
+        currentActivity = getActivity();
+        context = getActivity();
+
+        userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
+        friendList = userBundle.getFriends();
+        personalProfile = userBundle.getPersonalProfile();
+        settingTheAdapter(v);
+        return v;
+
+    }
+
+    private void hidingTheSearchBar(View v) {
         searchBar = v.findViewById(R.id.searchBar);
         searchBar.setVisibility(View.INVISIBLE);
         searchBar.setVisibility(View.GONE);
-        setHasOptionsMenu(true);
-        currentActivity = getActivity();
-        context = getActivity();
-        return v;
+    }
 
+    private void settingTheAdapter(View v) {
+        userList = v.findViewById(R.id.userList);
+        lm = new LinearLayoutManager(v.getContext());
+        userList.setLayoutManager(lm);
+        Location personalLocation = new Location("MyLocation");
+        personalLocation.setLatitude(personalProfile.getLastState().getLatLng().latitude);
+        personalLocation.setLongitude(personalProfile.getLastState().getLatLng().longitude);
+        userListAdapter = new UserListAdapter(friendList,personalLocation);
+        userList.setAdapter(userListAdapter);
     }
 
     @Override
@@ -74,20 +102,6 @@ public class UsersListFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-
-    }
-
-    private void init() {
-        LatLng latLng = new LatLng(45.533674, 9.231393);
-        stato1 = new UserState(latLng, "Ciao sono il tuo nuovo amico");
-        latLng = new LatLng(45.547904, 9.255229);
-        stato2 = new UserState(latLng, "Ciao sono il tuo 2 nuovo amico");
-        amico1 = new Friend("CiccioDuPuzzu", stato1);
-        amico2 = new Friend("DIO", stato2);
-        amici = new ArrayList<Friend>();
-        amici.add(amico1);
-        amici.add(amico2);
-
 
     }
 

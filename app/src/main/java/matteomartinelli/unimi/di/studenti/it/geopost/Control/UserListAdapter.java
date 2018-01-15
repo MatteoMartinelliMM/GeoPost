@@ -13,6 +13,9 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+import javax.jws.soap.SOAPBinding;
+
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 /**
@@ -20,29 +23,27 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
  */
 
 public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHolder> {
-    ArrayList<Friend> amici;
+    ArrayList<User> friends;
     Location myLocation;
 
     public UserListAdapter(String classCaller) {
-        amici = new ArrayList<Friend>();
+        friends = new ArrayList<User>();
 
     }
 
-    public UserListAdapter(ArrayList<Friend> amici) {
-        this.amici = amici;
-        myLocation = new Location("MY LOCATION");
-        myLocation.setLatitude(45.547604);
-        myLocation.setLongitude(9.254777);
+    public UserListAdapter(ArrayList<User> friends, Location myLocation) {
+        this.friends = friends;
+        this.myLocation = myLocation;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public CardView singlePackage;
+        public CardView singleFriend;
         public TextView username, stato, posizione;
         public ImageView userProPic;
 
         public ViewHolder(View v) {
             super(v);
-            singlePackage = itemView.findViewById(R.id.friendContainer);
+            singleFriend = itemView.findViewById(R.id.friendContainer);
             username = v.findViewById(R.id.username);
             stato = v.findViewById(R.id.stato);
             posizione = v.findViewById(R.id.distanza);
@@ -60,13 +61,11 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Friend friend = amici.get(position);
-        String sUsername = friend.getUsername();
-        String sStato = friend.getStato().getStato();
-        LatLng latLng = friend.getStato().getLatLng();
+        User friend = friends.get(position);
+        String sUsername = friend.getUserName();
+        String sStato = friend.getLastState().getStato();
+        LatLng latLng = friend.getLastState().getLatLng();
         Location friendLocation = new Location("FRIEND LOCATION");
-        friendLocation.setLatitude(latLng.latitude);
-        friendLocation.setLongitude(latLng.longitude);
         float distance = myLocation.distanceTo(friendLocation)/1000;
 
         holder.username.setText(sUsername);
@@ -78,7 +77,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
 
     @Override
     public int getItemCount() {
-        return amici.size();
+        return friends.size();
     }
 
 

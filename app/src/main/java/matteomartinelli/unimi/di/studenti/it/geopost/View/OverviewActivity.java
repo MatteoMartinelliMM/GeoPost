@@ -21,15 +21,18 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static android.view.KeyEvent.ACTION_DOWN;
 import static android.view.KeyEvent.ACTION_UP;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOWER;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
 public class OverviewActivity extends AppCompatActivity implements TaskDelegate {
@@ -49,8 +52,11 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     private ActionBar actionBar;
     private ProgressDialog dialog;
     private TaskDelegate delegate;
-    private String toParse;
+    private String friendListToParse, personalProfileToParse;
     private ArrayList<User> friendList;
+    private boolean isRecivedList = false, isRecivedProfile = false;
+    private User personalProfile;
+    private UserBundleToSave userBundle;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -106,16 +112,45 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         profileFragment = new PersonalProfileFragment();
         mapFragment = new MapFragmentContainer();
         friendList = new ArrayList<>();
+        personalProfile = new User();
         delegate = this;
         String userCookie = UtilitySharedPreference.getSavedCookie(this);
         dialog = new ProgressDialog(this);
         dialog.onStart();
+        gettingFriendStatusFromServer(userCookie);
+        dialog.onStart();
+        gettingPersonalProfileFromServer(userCookie);
+
+
+    }
+
+    private void gettingPersonalProfileFromServer(String userCookie) {
+        RestCall.get(REL_URL_PROFILE + userCookie, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if(statusCode == 200){
+                    personalProfileToParse = new String(responseBody);
+                    personalProfile = JSONParser.getPersonalProfile(personalProfileToParse);
+                    isRecivedProfile = true;
+                }
+                delegate.waitToComplete(""+statusCode);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                delegate.waitToComplete("Error: "+statusCode);
+            }
+        });
+    }
+
+    private void gettingFriendStatusFromServer(String userCookie) {
         RestCall.get(REL_URL_FOLLOWER+userCookie, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if(statusCode==200){
-                    toParse = new String(responseBody);
-
+                    friendListToParse = new String(responseBody);
+                    friendList = (ArrayList<User>) JSONParser.getFollowedUsers(friendListToParse);
+                    isRecivedList = true;
                 }
                 delegate.waitToComplete(statusCode+"");
             }
@@ -123,13 +158,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 if(statusCode==400) delegate.waitToComplete("Error "+ statusCode );
-
-
-
             }
         });
-
-
     }
 
     @Override
@@ -182,8 +212,12 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     public void waitToComplete(String s) {
         dialog.dismiss();
         dialog.cancel();
-        if(s.equals("200")){
-            friendList = (ArrayList<User>) JSONParser.getFollowedUsers(toParse);
+        if(s.equals("200") && isRecivedList && isRecivedProfile){
+            userBundle = new UserBundleToSave();
+            userBundle.setFriends(friendList);
+            userBundle.setPersonalProfile(personalProfile);
+            RWObject.writeObject(this,RWObject.USER_BUNDLE,userBundle);
+
         }else
             Toast.makeText(this,s,Toast.LENGTH_SHORT).show();
         navigation.setSelectedItemId(R.id.navigation_map);

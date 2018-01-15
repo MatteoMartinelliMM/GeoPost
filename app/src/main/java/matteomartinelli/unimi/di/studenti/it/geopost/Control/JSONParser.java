@@ -28,8 +28,28 @@ public class JSONParser {
     private static double longitude;
     private static boolean isEmptyUser = false;
 
+    public static User getPersonalProfile(String toParse){
+        User u = new User();
+        UserState userState = new UserState();
+        try {
+            JSONObject userToParse = new JSONObject(toParse);
+            Iterator<String> userFileds = userToParse.keys();
+            while (userFileds.hasNext()){
+                if(!isEmptyUser) {
+                    String userField = userFileds.next();
+                    fillInTheUserField(u, userState, userToParse, userField);
+                }else break;
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return u;
+    }
+
 
     public static List<User> getFollowedUsers(String toParse) {
+        isEmptyUser = false;
         List friendList = new ArrayList();
         JSONArray JSONfriendList;
         try {
@@ -39,7 +59,7 @@ public class JSONParser {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        isEmptyUser = false;
         return friendList;
     }
 
