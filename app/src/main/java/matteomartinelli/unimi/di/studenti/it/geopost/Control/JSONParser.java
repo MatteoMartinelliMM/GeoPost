@@ -92,7 +92,7 @@ public class JSONParser {
                 break;
             case USER_FIELD_MSG:
                 String userMsg = JSONSingleUser.getString(userField);
-                if(userMsg == "null"){
+                if(userMsg.equals("null")){
                     isEmptyUser = true;
                     break;
                 }
@@ -101,11 +101,12 @@ public class JSONParser {
             case USER_FIELD_LATITUDE:
                 String userLatitude = JSONSingleUser.getString(userField);
                 latitude = Double.parseDouble(userLatitude);
+                userState.setLatitude(latitude);
                 break;
             case USER_FIELD_LONGITUDE:
                 String userLongitude = JSONSingleUser.getString(userField);
                 longitude = Double.parseDouble(userLongitude);
-                userState.setLatLng(new LatLng(latitude,longitude));
+                userState.setLongitude(longitude);
                 u.setLastState(userState);
                 break;
 

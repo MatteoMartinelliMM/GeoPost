@@ -23,7 +23,7 @@ public class Geocoding {
         Geocoder geocoder;
         List<Address> addresses;
         geocoder = new Geocoder(context ,Locale.getDefault());
-        LatLng temp = stato.getLatLng();
+        LatLng temp = new LatLng(stato.getLatitude(),stato.getLongitude());
         double lat = temp.latitude;
         double lon = temp.longitude;
         try {

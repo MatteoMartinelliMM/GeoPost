@@ -9,23 +9,33 @@ import java.io.Serializable;
  */
 
 public class UserState implements Serializable{
-    private LatLng latLng;
+    private double latitude;
+    private double longitude;
     private String stato;
 
-    public UserState(LatLng latLng, String stato) {
-        this.latLng = latLng;
+    public UserState(double latitude , double longitude, String stato) {
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.stato = stato;
     }
 
     public UserState() {
     }
 
-    public LatLng getLatLng() {
-        return latLng;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setLatLng(LatLng latLng) {
-        this.latLng = latLng;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     public String getStato() {

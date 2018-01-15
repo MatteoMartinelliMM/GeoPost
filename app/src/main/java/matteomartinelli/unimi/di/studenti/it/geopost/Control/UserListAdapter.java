@@ -13,7 +13,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
-import javax.jws.soap.SOAPBinding;
+
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
@@ -64,7 +64,9 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
         User friend = friends.get(position);
         String sUsername = friend.getUserName();
         String sStato = friend.getLastState().getStato();
-        LatLng latLng = friend.getLastState().getLatLng();
+        double latitude = friend.getLastState().getLatitude();
+        double longitude = friend.getLastState().getLongitude();
+        LatLng latLng = new LatLng(latitude,longitude);
         Location friendLocation = new Location("FRIEND LOCATION");
         float distance = myLocation.distanceTo(friendLocation)/1000;
 

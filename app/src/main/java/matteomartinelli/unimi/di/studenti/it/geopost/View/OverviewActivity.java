@@ -217,6 +217,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             userBundle.setFriends(friendList);
             userBundle.setPersonalProfile(personalProfile);
             RWObject.writeObject(this,RWObject.USER_BUNDLE,userBundle);
+            UserBundleToSave prova = (UserBundleToSave) RWObject.readObject(this,RWObject.USER_BUNDLE);
+            String se  = "CIAO";
 
         }else
             Toast.makeText(this,s,Toast.LENGTH_SHORT).show();

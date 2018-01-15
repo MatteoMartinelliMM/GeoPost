@@ -14,7 +14,8 @@ public class User implements Serializable{
     private ArrayList<UserState> userStates;
     private UserState lastState;
     private String cookie;
-    private LatLng currentPosition;
+    private double latitude;
+    private double longitude;
     public String getCookie() {
         return cookie;
     }
@@ -50,12 +51,20 @@ public class User implements Serializable{
         this.userStates = userStates;
     }
 
-    public LatLng getCurrentPosition() {
-        return currentPosition;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setCurrentPosition(LatLng currentPosition) {
-        this.currentPosition = currentPosition;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     public UserState getLastState() {

@@ -59,7 +59,7 @@ public class PersonalProfileFragment extends Fragment {
         context = getActivity();
         lm = new LinearLayoutManager(v.getContext());
         setHasOptionsMenu(true);
-        init();
+
         if(!states.isEmpty()){
             UserState stato = states.get(0);
             userState.setText(stato.getStato());
@@ -85,26 +85,7 @@ public class PersonalProfileFragment extends Fragment {
         super.onDetach();
 
     }
-    private void init(){
-        states = new ArrayList<>();
-        LatLng latLng = new LatLng(45.533674, 11.231393);
-        stato1 = new UserState(latLng,"Ciao questo è il mio primo stato");
-        latLng = new LatLng(45.547904, 9.255229);
-        stato2 = new UserState(latLng,"Ciao questo è il mio secondo stato");
-        latLng = new LatLng(45.533674, 12.231393);
-        stato3 = new UserState(latLng,"Ciao questo è il mio terzo stato");
-        latLng = new LatLng(45.533674, 6.231393);
-        stato4 = new UserState(latLng,"Buongiorno a tutti questo è bensì già il mio 4 stato nonostante non m" +
-                "i piacciano i social puntoi virgola fine");
-        latLng = new LatLng(44.533674, 11.231393);
-        stato5 = new UserState(latLng,"ei bebi");
-        states.add(0,stato1);
-        states.add(0,stato2);
-        states.add(0,stato3);
-        states.add(0,stato4);
-        states.add(0,stato5);
 
-    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

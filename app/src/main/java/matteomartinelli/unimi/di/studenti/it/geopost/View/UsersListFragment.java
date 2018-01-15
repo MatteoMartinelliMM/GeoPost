@@ -51,9 +51,7 @@ public class UsersListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        userBundle = new UserBundleToSave();
-        friendList = new ArrayList<>();
-        personalProfile = new User();
+
 
     }
 
@@ -68,10 +66,6 @@ public class UsersListFragment extends Fragment {
         currentActivity = getActivity();
         context = getActivity();
 
-        userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-        friendList = userBundle.getFriends();
-        personalProfile = userBundle.getPersonalProfile();
-        settingTheAdapter(v);
         return v;
 
     }
@@ -87,9 +81,8 @@ public class UsersListFragment extends Fragment {
         lm = new LinearLayoutManager(v.getContext());
         userList.setLayoutManager(lm);
         Location personalLocation = new Location("MyLocation");
-        personalLocation.setLatitude(personalProfile.getLastState().getLatLng().latitude);
-        personalLocation.setLongitude(personalProfile.getLastState().getLatLng().longitude);
-        userListAdapter = new UserListAdapter(friendList,personalLocation);
+        personalLocation.setLatitude(personalProfile.getLastState().getLatitude());
+        personalLocation.setLongitude(personalProfile.getLastState().getLongitude());
         userList.setAdapter(userListAdapter);
     }
 
@@ -97,11 +90,25 @@ public class UsersListFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
+
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        userBundle = new UserBundleToSave();
+        friendList = new ArrayList<>();
+        personalProfile = new User();
+        userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
+        friendList = userBundle.getFriends();
+        personalProfile = userBundle.getPersonalProfile();
+
 
     }
 

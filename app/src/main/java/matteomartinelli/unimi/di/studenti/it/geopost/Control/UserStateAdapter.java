@@ -72,7 +72,7 @@ public class UserStateAdapter extends RecyclerView.Adapter<UserStateAdapter.View
         }
         UserState stato = states.get(position);
         String sStato = stato.getStato();
-        LatLng latLng = stato.getLatLng();
+        LatLng latLng = new LatLng(stato.getLatitude(),stato.getLongitude());
         String address = Geocoding.getAdressFromCoord(stato, context);
         holder.stato.setText(sStato);
         holder.posizione.setText(address);
