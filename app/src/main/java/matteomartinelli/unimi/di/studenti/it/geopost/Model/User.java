@@ -64,11 +64,7 @@ public class User implements Serializable, Comparable<User> {
 
     @Override
     public int compareTo(@NonNull User o) {
-        float u1 = this.getLastState().getDistanceToLoggedUser();
-        float u2 = o.getLastState().getDistanceToLoggedUser();
-        if(u1<u2) return 1;
-        else if(u1>u2) return -1;
-        return 0;
+        return Float.compare(this.getLastState().getDistanceToLoggedUser(),o.getLastState().getDistanceToLoggedUser());
     }
 }
 
