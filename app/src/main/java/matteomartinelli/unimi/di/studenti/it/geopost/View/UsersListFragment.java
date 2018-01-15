@@ -41,7 +41,7 @@ public class UsersListFragment extends Fragment {
     private AutoCompleteTextView searchBar;
     private Activity currentActivity;
     private Context context;
-
+    private View v;
     public UsersListFragment() {
         // Required empty public constructor
     }
@@ -57,7 +57,7 @@ public class UsersListFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_users_list, container, false);
+        v = inflater.inflate(R.layout.fragment_users_list, container, false);
 
         hidingTheSearchBar(v);
 
@@ -81,8 +81,9 @@ public class UsersListFragment extends Fragment {
         lm = new LinearLayoutManager(v.getContext());
         userList.setLayoutManager(lm);
         Location personalLocation = new Location("MyLocation");
-        personalLocation.setLatitude(personalProfile.getLastState().getLatitude());
-        personalLocation.setLongitude(personalProfile.getLastState().getLongitude());
+        personalLocation.setLatitude(45.547767);
+        personalLocation.setLongitude(9.254693);
+        userListAdapter = new UserListAdapter(friendList,personalLocation);
         userList.setAdapter(userListAdapter);
     }
 
@@ -108,6 +109,7 @@ public class UsersListFragment extends Fragment {
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
         friendList = userBundle.getFriends();
         personalProfile = userBundle.getPersonalProfile();
+        settingTheAdapter(v);
 
 
     }

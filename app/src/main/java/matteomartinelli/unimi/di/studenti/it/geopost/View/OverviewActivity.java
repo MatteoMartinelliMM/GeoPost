@@ -18,8 +18,11 @@ import android.widget.Toast;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import cz.msebera.android.httpclient.Header;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.CalculateFriendsDistance;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
@@ -27,6 +30,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -82,7 +86,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                         ft.replace(R.id.fragContainer, mapFragment, PROFILE + "|" + USERS_LIST);
                     else
                         ft.add(R.id.fragContainer, mapFragment, MAP_FRAGMENT);
-                    ft.commit();
+                    ft.commitAllowingStateLoss();
                     return true;
                 case R.id.navigation_profile:
                     getSupportActionBar().show();
@@ -213,6 +217,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         dialog.dismiss();
         dialog.cancel();
         if(s.equals("200") && isRecivedList && isRecivedProfile){
+            friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList,personalProfile);
+
             userBundle = new UserBundleToSave();
             userBundle.setFriends(friendList);
             userBundle.setPersonalProfile(personalProfile);
@@ -220,7 +226,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             UserBundleToSave prova = (UserBundleToSave) RWObject.readObject(this,RWObject.USER_BUNDLE);
             String se  = "CIAO";
 
-        }else
+        }else if(!s.equals("200"))
             Toast.makeText(this,s,Toast.LENGTH_SHORT).show();
         navigation.setSelectedItemId(R.id.navigation_map);
         start = true;

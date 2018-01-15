@@ -64,17 +64,22 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
         User friend = friends.get(position);
         String sUsername = friend.getUserName();
         String sStato = friend.getLastState().getStato();
-        double latitude = friend.getLastState().getLatitude();
-        double longitude = friend.getLastState().getLongitude();
-        LatLng latLng = new LatLng(latitude,longitude);
-        Location friendLocation = new Location("FRIEND LOCATION");
-        float distance = myLocation.distanceTo(friendLocation)/1000;
+        float distance = getFriendDistance(friend);
 
         holder.username.setText(sUsername);
         holder.stato.setText(sStato);
         if(distance>=2)
             holder.posizione.setText(String.format("%.2f",distance)+" km");
 
+    }
+
+    private float getFriendDistance(User friend) {
+        double latitude = friend.getLastState().getLatitude();
+        double longitude = friend.getLastState().getLongitude();
+        Location friendLocation = new Location("FRIEND LOCATION");
+        friendLocation.setLongitude(longitude);
+        friendLocation.setLatitude(latitude);
+        return myLocation.distanceTo(friendLocation)/1000;
     }
 
     @Override
