@@ -11,5 +11,9 @@ public class RelativeURLConstants {
     public static final String REL_URL_LOGIN = "login";
     public static final String REL_URL_PROFILE  = "profile?session_id=";
     public static final String REL_URL_LOGOUT = "logout?session_id=";
+    public static final String REL_URL_STATUS_UPDATE = "status_update?session_id=";
+    public static final String REL_URL_MESSAGE = "&message=";
+    public static final String REL_URL_LAT = "&lat=";
+    public static final String REL_URL_LON ="&lon=";
 
 }

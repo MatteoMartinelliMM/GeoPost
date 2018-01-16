@@ -1,6 +1,7 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -23,20 +24,24 @@ import android.widget.TextView;
 import android.support.v4.app.FragmentManager;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.Task;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import java.util.ArrayList;
 
 
+import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Pager;
-import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserStateAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
-public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener {
-    private UserState stato1, stato2, stato3, stato4, stato5;
-    private ArrayList<UserState> states;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGOUT;
+
+public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener,TaskDelegate {
     private TextView userName, userState, lastPosition;
     private RecyclerView.LayoutManager lm;
     private boolean done;
@@ -44,6 +49,8 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     private Activity currentActitvity;
     private ViewPager statusContainer;
     private TabLayout tabLayout;
+    private ProgressDialog dialog;
+    private TaskDelegate delegate;
     public PersonalProfileFragment() {
         // Required empty public constructor
     }
@@ -63,6 +70,8 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         currentActitvity = getActivity();
         context = getActivity();
         currentActitvity.setTitle(UtilitySharedPreference.getLoggedUsername(context));
+        delegate = this;
+        dialog = new ProgressDialog(context);
         setHasOptionsMenu(true);
         settingTabLayout();
         return v;
@@ -105,6 +114,11 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
 
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        statusContainer.setCurrentItem(0);
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -116,16 +130,32 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.logout:
-                //TODO implement RESTCALL logout
+                String cookie = UtilitySharedPreference.getSavedCookie(context);
                 done = UtilitySharedPreference.logoutTheCurrentUser(context);
-                Intent intent = new Intent(context, LoginActivity.class);
-                startActivity(intent);
-                currentActitvity.finish();
+                if(done) {
+                    tryToLogout(cookie);
+                }
                 break;
             default:
                 break;
         }
         return true;
+    }
+
+    private void tryToLogout(String cookie) {
+        dialog.onStart();
+        RestCall.get(REL_URL_LOGOUT + cookie, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if(statusCode==200)
+                    delegate.waitToComplete("");
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                delegate.waitToComplete(statusCode+"");
+            }
+        });
     }
 
     @Override
@@ -141,5 +171,14 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     @Override
     public void onTabReselected(TabLayout.Tab tab) {
 
+    }
+
+    @Override
+    public void waitToComplete(String s) {
+        if(s.equals("")){
+            Intent intent = new Intent(context, LoginActivity.class);
+            startActivity(intent);
+            currentActitvity.finish();
+        }
     }
 }

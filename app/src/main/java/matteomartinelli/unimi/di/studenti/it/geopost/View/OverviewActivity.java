@@ -71,7 +71,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             FragmentTransaction ft = fm.beginTransaction();
             switch (item.getItemId()) {
                 case R.id.navigation_list:
-                    getSupportActionBar().show();
+                    getSupportActionBar().hide();
                     if (start) {
                         ft.replace(R.id.fragContainer, listFragment, PROFILE + "|" + MAP_FRAGMENT);
                     } else {
@@ -231,5 +231,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         navigation.setSelectedItemId(R.id.navigation_map);
         start = true;
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 }

@@ -61,6 +61,10 @@ public class User implements Serializable, Comparable<User> {
         this.lastState = lastState;
     }
 
+    public void addTheNewOldStatusOnTopOfTheList(UserState newOld){
+        userStates.add(0,newOld);
+    }
+
 
     @Override
     public int compareTo(@NonNull User o) {

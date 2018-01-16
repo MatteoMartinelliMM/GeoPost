@@ -10,6 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
@@ -30,6 +31,7 @@ public class PersonalHistFragment extends Fragment {
     private UserBundleToSave userBundleToSave;
     private RecyclerView userStateHist;
     private LinearLayoutManager lm;
+    private TextView noSocialLife;
 
     public PersonalHistFragment() {
         // Required empty public constructor
@@ -53,6 +55,7 @@ public class PersonalHistFragment extends Fragment {
         userBundleToSave = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
         loggedUser = userBundleToSave.getPersonalProfile();
         userStateHist = v.findViewById(R.id.userStatusList);
+        noSocialLife = v.findViewById(R.id.noSocialLife);
         lm = new LinearLayoutManager(context);
 
         return v;
@@ -61,9 +64,11 @@ public class PersonalHistFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        userStateAdapter = new UserStateAdapter(loggedUser.getUserStates(),context);
-        userStateHist.setLayoutManager(lm);
-        userStateHist.setAdapter(userStateAdapter);
+        if (loggedUser.getLastState().getStato() != null && loggedUser.getUserStates() != null) {
+            userStateAdapter = new UserStateAdapter(loggedUser.getUserStates(), context);
+            userStateHist.setLayoutManager(lm);
+            userStateHist.setAdapter(userStateAdapter);
+        } else if(loggedUser.getUserStates() != null) noSocialLife.setText(":(\nSeems you didn't post anything");
 
     }
 
