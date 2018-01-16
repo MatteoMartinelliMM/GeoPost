@@ -3,7 +3,8 @@ package matteomartinelli.unimi.di.studenti.it.geopost.View;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.app.Fragment;
+
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,10 +22,12 @@ import java.util.ArrayList;
 
 
 import android.location.Location;
+import android.widget.RelativeLayout;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.CalculateFriendsDistance;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserListAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
@@ -43,6 +46,7 @@ public class UsersListFragment extends Fragment {
     private Activity currentActivity;
     private Context context;
     private View v;
+    private RelativeLayout bar;
     public UsersListFragment() {
         // Required empty public constructor
     }
@@ -72,14 +76,15 @@ public class UsersListFragment extends Fragment {
     }
 
     private void hidingTheSearchBar(View v) {
+        bar = v.findViewById(R.id.bar);
         searchBar = v.findViewById(R.id.searchBar);
-        searchBar.setVisibility(View.INVISIBLE);
-        searchBar.setVisibility(View.GONE);
+        bar.setVisibility(View.INVISIBLE);
+
     }
 
     private void settingTheAdapter(View v) {
         userList = v.findViewById(R.id.userList);
-        lm = new LinearLayoutManager(v.getContext());
+        lm = new LinearLayoutManager(context);
         userList.setLayoutManager(lm);
         Location personalLocation = new Location("MyLocation");
         personalLocation.setLatitude(45.547767);
@@ -126,9 +131,15 @@ public class UsersListFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.search:
+                bar.setVisibility(View.VISIBLE);
+                searchBar.setVisibility(View.VISIBLE);
+                searchBar.invalidate();
+                bar.invalidate();
+
                 if (currentActivity instanceof AppCompatActivity) {
+
                     ((AppCompatActivity) currentActivity).getSupportActionBar().hide();
-                    searchBar.setVisibility(View.VISIBLE);
+
                 }
                 break;
             default:
