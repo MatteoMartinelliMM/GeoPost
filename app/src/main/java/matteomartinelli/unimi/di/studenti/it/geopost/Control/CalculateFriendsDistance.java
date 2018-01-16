@@ -26,6 +26,7 @@ public class CalculateFriendsDistance {
         }
         Collections.sort(friendList);
         return friendList;
+
     }
 
     private static float getFriendDistance(User friend, User loggedUser) {
@@ -37,8 +38,8 @@ public class CalculateFriendsDistance {
         Location loggedUserLocation = new Location(LOGGED_USER_LOCATION);
         friendLocation.setLongitude(friendLongitude);
         friendLocation.setLatitude(friendLatitude);
-        loggedUserLocation.setLongitude(45.547676);
-        loggedUserLocation.setLatitude(9.254575);
+        loggedUserLocation.setLongitude(9.254575);
+        loggedUserLocation.setLatitude(45.547676);
         return loggedUserLocation.distanceTo(friendLocation);
     }
 }

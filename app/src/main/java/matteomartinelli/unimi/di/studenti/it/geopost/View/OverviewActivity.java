@@ -218,7 +218,6 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         dialog.cancel();
         if(s.equals("200") && isRecivedList && isRecivedProfile){
             friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList,personalProfile);
-
             userBundle = new UserBundleToSave();
             userBundle.setFriends(friendList);
             userBundle.setPersonalProfile(personalProfile);

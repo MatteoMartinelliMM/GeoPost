@@ -60,7 +60,7 @@ public class PersonalProfileFragment extends Fragment {
         lm = new LinearLayoutManager(v.getContext());
         setHasOptionsMenu(true);
 
-        if(!states.isEmpty()){
+        /*if(states.isEmpty()){
             UserState stato = states.get(0);
             userState.setText(stato.getStato());
             String address = Geocoding.getAdressFromCoord(stato,getActivity());
@@ -68,7 +68,7 @@ public class PersonalProfileFragment extends Fragment {
             storyLine.setLayoutManager(lm);
             userStateAdapter = new UserStateAdapter(states,getActivity());
             storyLine.setAdapter(userStateAdapter);
-        }
+        }*/
         return v;
     }
 

@@ -32,13 +32,17 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.MarkerPlacer;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 
+import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOWER;
 
 
@@ -54,6 +58,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     public static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION =1;
     private FloatingActionButton addStatus;
     private String toParse;
+    private UserBundleToSave userBundle;
+    private User personalProfile;
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -124,6 +130,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 // result of the request.
             }
         }
+        userBundle = new UserBundleToSave();
+        friendList = new ArrayList<>();
+        personalProfile = new User();
+        userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
+        friendList = userBundle.getFriends();
+        personalProfile = userBundle.getPersonalProfile();
         mapFragment.getMapAsync(this);
 
 
@@ -156,10 +168,11 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(45.533674, 11.231393), 15);
+        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(45.533674, 9.254575), 15);
         googleMap.moveCamera(zoom);
         googleMap.animateCamera(zoom);
-        googleMap.addMarker(new MarkerOptions().position(new LatLng(45.533674, 11.231393)).title("Hello Map"));
+        googleMap.addMarker(new MarkerOptions().position(new LatLng(45.533674, 9.254575)).title("Hello Map"));
+        MarkerPlacer.fillInTheMapWithMarkes(googleMap,friendList);
 
     }
 

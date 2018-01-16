@@ -22,6 +22,7 @@ import java.util.ArrayList;
 
 import android.location.Location;
 
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.CalculateFriendsDistance;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserListAdapter;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
@@ -83,6 +84,7 @@ public class UsersListFragment extends Fragment {
         Location personalLocation = new Location("MyLocation");
         personalLocation.setLatitude(45.547767);
         personalLocation.setLongitude(9.254693);
+
         userListAdapter = new UserListAdapter(friendList,personalLocation);
         userList.setAdapter(userListAdapter);
     }
