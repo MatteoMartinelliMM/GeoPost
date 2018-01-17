@@ -24,6 +24,7 @@ public class JSONParser {
     public static final String USER_FIELD_MSG = "msg";
     public static final String USER_FIELD_LATITUDE = "lat";
     public static final String USER_FIELD_LONGITUDE = "lon";
+    public static final String USERNAMES = "usernames";
     private static double latitude;
     private static double longitude;
     private static boolean isEmptyUser = false;
@@ -47,6 +48,19 @@ public class JSONParser {
         return u;
     }
 
+    public static List<String> getUsernameToFollow(String toParse){
+        List<String> toFollow = new ArrayList<String>();
+        try {
+            JSONObject temp = new JSONObject(toParse);
+            JSONArray list = temp.getJSONArray(USERNAMES);
+            for(int i= 0 ; i<list.length();i++){
+                toFollow.add(list.getString(i));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return toFollow;
+    }
 
     public static List<User> getFollowedUsers(String toParse) {
         isEmptyUser = false;

@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupWindow;
@@ -82,7 +83,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private double latitude,longitude;
     private String userNewStatus;
     private GoogleMap gMap;
-
+    private boolean moveUp=false;
+    private AutoCompleteTextView searchBar;
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -113,6 +115,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         context = getActivity();
         currentActivity = getActivity();
         mRelative = v.findViewById(R.id.mRelative);
+        searchBar = v.findViewById(R.id.searchBarMap);
     }
 
 
@@ -141,6 +144,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         friendList = userBundle.getFriends();
         personalProfile = userBundle.getPersonalProfile();
         mapFragment.getMapAsync(this);
+
 
 
     }
@@ -214,6 +218,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             userBundle.setPersonalProfile(personalProfile);
             RWObject.writeObject(context,USER_BUNDLE,userBundle);
             addStatusPopUp.dismiss();
+            moveUp = false;
         } else
             Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
 
@@ -242,14 +247,17 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         addStatusPopUp.update();
         addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, 0);
         displayingTextCounter(customView);
-        newStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addStatusPopUp.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-            }
-        });
-
-
+        if(!moveUp) {
+            newStatus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    addStatusPopUp.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                    addStatusPopUp.dismiss();
+                    addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, -200);
+                    moveUp = true;
+                }
+            });
+        }
         if (Build.VERSION.SDK_INT >= 21) {
             addStatusPopUp.setElevation(8.0f);
         }

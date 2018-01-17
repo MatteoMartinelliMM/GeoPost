@@ -64,11 +64,11 @@ public class PersonalHistFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if (loggedUser.getLastState().getStato() != null && loggedUser.getUserStates() != null) {
+        if (loggedUser.getUserStates() != null) {
             userStateAdapter = new UserStateAdapter(loggedUser.getUserStates(), context);
             userStateHist.setLayoutManager(lm);
             userStateHist.setAdapter(userStateAdapter);
-        } else if(loggedUser.getUserStates() != null) noSocialLife.setText(":(\nSeems you didn't post anything");
+        } else if(loggedUser.getLastState() != null) noSocialLife.setText(":(\nSeems you didn't post anything");
 
     }
 
