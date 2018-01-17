@@ -87,7 +87,7 @@ public class UsersListFragment extends Fragment{
 
 
         setHasOptionsMenu(true);
-
+        searchBar = v.findViewById(R.id.searchBar);
         currentActivity = getActivity();
         currentActivity.setTitle("Friend List");
         context = getActivity();

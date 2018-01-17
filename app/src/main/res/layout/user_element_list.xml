@@ -23,6 +23,7 @@
                 android:id="@+id/userProPic"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/circle_img_view"
                 app:srcCompat="@drawable/propic" />
 
             <TextView

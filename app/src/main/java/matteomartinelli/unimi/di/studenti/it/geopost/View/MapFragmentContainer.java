@@ -21,6 +21,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupWindow;
@@ -53,6 +54,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
+import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LAT;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LON;
@@ -232,12 +234,20 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         // Inflate the custom layout/view
         View customView = inflater.inflate(R.layout.add_status, null);
         ImageButton send = customView.findViewById(R.id.submit);
+
         addStatusPopUp = new PopupWindow(customView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        addStatusPopUp.setInputMethodMode(INPUT_METHOD_NEEDED);
         newStatus = customView.findViewById(R.id.status);
         addStatusPopUp.setFocusable(true);
         addStatusPopUp.update();
         addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, 0);
         displayingTextCounter(customView);
+        newStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                addStatusPopUp.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            }
+        });
 
 
         if (Build.VERSION.SDK_INT >= 21) {
@@ -294,5 +304,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             }
         });
     }
+
 
 }
