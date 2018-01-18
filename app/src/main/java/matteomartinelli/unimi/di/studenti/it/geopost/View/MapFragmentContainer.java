@@ -14,7 +14,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -22,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -43,6 +43,8 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.AutoCompleteTextViewAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.MarkerPlacer;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
@@ -57,14 +59,20 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOW;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LAT;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LON;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_MESSAGE;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_START_NAME;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_STATUS_UPDATE;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_USERNAME;
+import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_USERS;
 
 
 public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate, View.OnClickListener {
-
+    public static final String ADD_FRIEND = "AddFriend";
+    public static final String SEARCH_FRIEND = "SearchFriend";
+    public static final String ADD_STATUS = "AddStatus";
     View v;
     private Context context;
     private Activity currentActivity;
@@ -80,11 +88,15 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private RelativeLayout mRelative;
     private PopupWindow addStatusPopUp;
     private EditText newStatus;
-    private double latitude,longitude;
+    private double latitude, longitude;
     private String userNewStatus;
     private GoogleMap gMap;
-    private boolean moveUp=false;
+    private boolean moveUp = false;
     private AutoCompleteTextView searchBar;
+    private ArrayList<String> usernames, usernamesTemp;
+    private AutoCompleteTextViewAdapter ATVAdapter;
+    private String cookie;
+
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -95,6 +107,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         friendList = new ArrayList<>();
         delegate = this;
+        usernames = new ArrayList<>();
+        usernamesTemp = new ArrayList<>();
 
 
     }
@@ -102,23 +116,27 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
-        dialog = new ProgressDialog(context);
+
         // Inflate the layout for this fragment
         return v;
     }
 
-    private void settingTheContextNView(LayoutInflater inflater, ViewGroup container) {
+    private void settingTheContextNView(LayoutInflater inflater, final ViewGroup container) {
         v = inflater.inflate(R.layout.fragment_map, container, false);
         addStatus = v.findViewById(R.id.addStatus);
         addStatus.setOnClickListener(this);
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
         context = getActivity();
         currentActivity = getActivity();
+        dialog = new ProgressDialog(context);
         mRelative = v.findViewById(R.id.mRelative);
         searchBar = v.findViewById(R.id.searchBarMap);
+        cookie = UtilitySharedPreference.getSavedCookie(context);
+        ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
+        searchBar.setAdapter(ATVAdapter);
+        usingATV();
+
     }
-
-
 
 
     @Override
@@ -141,36 +159,16 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         friendList = new ArrayList<>();
         personalProfile = new User();
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-        friendList = userBundle.getFriends();
-        personalProfile = userBundle.getPersonalProfile();
+        if (userBundle != null) {
+            friendList = userBundle.getFriends();
+            personalProfile = userBundle.getPersonalProfile();
+        }
         mapFragment.getMapAsync(this);
 
 
 
     }
 
-    private void askingForUsersGpsPermission() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(currentActivity, Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions(currentActivity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        }
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -206,22 +204,35 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     }
 
     @Override
-    public void waitToComplete(String s) {
-        if (s.equals("")) {
-            dialog.dismiss();
-            dialog.cancel();
-            UserState toAddInOldStatusList = personalProfile.getLastState();
-            personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
-            UserState newLastState = new UserState(latitude,longitude,userNewStatus);
-            personalProfile.setLastState(newLastState);
-            MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
-            userBundle.setPersonalProfile(personalProfile);
-            RWObject.writeObject(context,USER_BUNDLE,userBundle);
-            addStatusPopUp.dismiss();
-            moveUp = false;
-        } else
-            Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
+    public void waitToComplete(String restCall) {
+        dialog.dismiss();
+        dialog.cancel();
+        switch (restCall) {
+            case ADD_STATUS:
+                UserState toAddInOldStatusList = personalProfile.getLastState();
+                personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
+                UserState newLastState = new UserState(latitude, longitude, userNewStatus);
+                personalProfile.setLastState(newLastState);
+                MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
+                userBundle.setPersonalProfile(personalProfile);
+                RWObject.writeObject(context, USER_BUNDLE, userBundle);
+                addStatusPopUp.dismiss();
+                moveUp = false;
+                break;
+            case SEARCH_FRIEND:
+                ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
+                searchBar.setAdapter(ATVAdapter);
+                searchBar.showDropDown();
+                break;
+            case ADD_FRIEND:
+                Toast.makeText(context,"Friend added :)",Toast.LENGTH_SHORT).show();
+                searchBar.dismissDropDown();
+                searchBar.clearComposingText();
+                break;
+            default:
+                Toast.makeText(context, restCall, Toast.LENGTH_SHORT).show();
 
+        }
     }
 
     @Override
@@ -247,17 +258,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         addStatusPopUp.update();
         addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, 0);
         displayingTextCounter(customView);
-        if(!moveUp) {
-            newStatus.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    addStatusPopUp.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-                    addStatusPopUp.dismiss();
-                    addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, -200);
-                    moveUp = true;
-                }
-            });
-        }
         if (Build.VERSION.SDK_INT >= 21) {
             addStatusPopUp.setElevation(8.0f);
         }
@@ -282,7 +282,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200)
-                    delegate.waitToComplete("");
+                    delegate.waitToComplete(ADD_STATUS);
+                delegate.waitToComplete(ADD_STATUS);
             }
 
             @Override
@@ -313,5 +314,101 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         });
     }
 
+    private void askingForUsersGpsPermission() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(currentActivity, Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+                  ActivityCompat.requestPermissions(currentActivity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+            }
+        }
+    }
+
+    private void usingATV(){
+        searchBar.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                dialog.onStart();
+                String userToadd = (String) ATVAdapter.getItem(i);
+                searchBar.clearListSelection();
+                searchBar.clearComposingText();
+                RestCallAddUser(userToadd);
+
+            }
+        });
+        searchBar.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                searchBar.setTag(true);
+            }
+        });
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!editable.toString().equals("") && (boolean) searchBar.getTag()) {
+                    String r = editable.toString();
+                    String val = cookie;
+                    dialog.onStart();
+                    RestcallForSearchUsers(editable);
+                }
+
+            }
+        });
+
+    }
+
+    private void RestCallAddUser(String userToadd) {
+        RestCall.get(REL_URL_FOLLOW + cookie + REL_URL_USERNAME + userToadd, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if (statusCode == 200)
+                    delegate.waitToComplete(ADD_FRIEND);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                if(statusCode==400){
+                    String errorResult = new String(responseBody);
+                    delegate.waitToComplete(errorResult);
+                }
+            }
+        });
+    }
+
+    private void RestcallForSearchUsers(Editable editable) {
+        RestCall.get(REL_URL_USERS + cookie + REL_URL_START_NAME + editable.toString(), null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if (statusCode == 200) {
+                    String toParse = new String(responseBody);
+                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse);
+                }
+
+                delegate.waitToComplete(SEARCH_FRIEND);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                String s = new String(responseBody);
+                String bo = "";
+            }
+        });
+    }
 }

@@ -67,34 +67,32 @@ public class AutoCompleteTextViewAdapter extends ArrayAdapter {
     public Filter getFilter() {
         Filter myFilter = new Filter() {
             @Override
+            public CharSequence convertResultToString(Object resultValue) {
+                String toReturn = (String) resultValue;
+                return  toReturn;
+            }
+
+            @Override
             protected FilterResults performFiltering(CharSequence charSequence) {
                 FilterResults filterResults = new FilterResults();
                 if(charSequence!=null){
-                    RestCall.get(REL_URL_USERS + cookie + REL_URL_START_NAME + charSequence, null, new AsyncHttpResponseHandler() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                            if(statusCode==200){
-                                String toParse = new String(responseBody);
-                                username = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse);
-                            }
-                        }
+                    filterResults.values = username;
+                    filterResults.count = username.size();
+                    return filterResults;
 
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                }else return new FilterResults();
 
-                        }
-                    });
-                }
-
-                return filterResults;
             }
 
             @Override
             protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                ArrayList<String> filteredResult = (ArrayList<String>) filterResults.values;
                 if(filterResults != null && filterResults.count>0){
+                    clear();
+                    for (String s: filteredResult)
+                        add(s);
                     notifyDataSetChanged();
-                }else
-                    notifyDataSetInvalidated();
+                }
             }
         };
         return myFilter;

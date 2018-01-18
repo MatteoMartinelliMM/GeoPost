@@ -69,7 +69,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
         holder.username.setText(sUsername);
         holder.stato.setText(sStato);
         if(distance>=2)
-            holder.posizione.setText(String.format("%.2f",distance)+" km");
+            holder.posizione.setText("a " +String.format("%.2f",distance)+" km da te");
 
     }
 

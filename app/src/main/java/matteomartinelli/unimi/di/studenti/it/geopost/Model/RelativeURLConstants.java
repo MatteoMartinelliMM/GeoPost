@@ -16,5 +16,7 @@ public class RelativeURLConstants {
     public static final String REL_URL_LON = "&lon=";
     public static final String REL_URL_USERS = "users?session_id=";
     public static final String REL_URL_START_NAME = "&usernamestart=";
+    public static final String REL_URL_FOLLOW = "follow?session_id=";
+    public static final String REL_URL_USERNAME = "&username=";
 
 }
