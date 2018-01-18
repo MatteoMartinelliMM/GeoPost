@@ -17,7 +17,8 @@ public class User implements Serializable, Comparable<User> {
     private ArrayList<UserState> userStates;
     private UserState lastState;
     private String cookie;
-
+    private double currentLatitude;
+    private double currentLongitude;
 
     public User(String userName, ArrayList<UserState> userStates) {
         this.userName = userName;
@@ -65,6 +66,21 @@ public class User implements Serializable, Comparable<User> {
         userStates.add(0,newOld);
     }
 
+    public double getCurrentLatitude() {
+        return currentLatitude;
+    }
+
+    public void setCurrentLatitude(double currentLatitude) {
+        this.currentLatitude = currentLatitude;
+    }
+
+    public double getCurrentLongitude() {
+        return currentLongitude;
+    }
+
+    public void setCurrentLongitude(double currentLongitude) {
+        this.currentLongitude = currentLongitude;
+    }
 
     @Override
     public int compareTo(@NonNull User o) {

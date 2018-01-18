@@ -8,9 +8,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -32,13 +34,18 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
 
@@ -59,6 +66,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
+import static android.content.Context.SHORTCUT_SERVICE;
 import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOW;
@@ -97,7 +105,9 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private AutoCompleteTextViewAdapter ATVAdapter;
     private String cookie;
     private final AlertDialog.Builder allertBuilder = null;
-
+    private LocationManager locationManager;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private Location loggedUserLocation;
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -114,7 +124,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
-
+        locationManager = (LocationManager) currentActivity.getSystemService( Context.LOCATION_SERVICE );
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
         return v;
     }
@@ -140,6 +151,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -165,11 +182,23 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             friendList = userBundle.getFriends();
             personalProfile = userBundle.getPersonalProfile();
         }
-        final LocationManager locationManager = (LocationManager) currentActivity.getSystemService( Context.LOCATION_SERVICE );
+        try {
+            mFusedLocationClient.getLastLocation().addOnSuccessListener(currentActivity, new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if(location!=null)
+                        personalProfile.setCurrentLatitude(location.getLatitude());
+                        personalProfile.setCurrentLongitude(location.getLongitude());
 
-        if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
-            buildAlertMessageNoGps();
+                }
+            });
+
+        }catch (SecurityException e){
+            Toast.makeText(context,"NO GPS PERMISSION",Toast.LENGTH_SHORT).show();
         }
+
+
+
         mapFragment.getMapAsync(this);
 
 
@@ -189,8 +218,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay! Do the
-                    // gps-related task you need to do.
 
                 } else {
 
@@ -205,11 +232,13 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        double lat  = personalProfile.getCurrentLatitude();
+        double lon = personalProfile.getCurrentLongitude();
         gMap = googleMap;
-        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(45.533674, 9.254575), 15);
+        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
         gMap.moveCamera(zoom);
         gMap.animateCamera(zoom);
-        gMap.addMarker(new MarkerOptions().position(new LatLng(45.533674, 9.254575)).title("Hello Map"));
+        gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("Hello Map"));
         MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList);
 
     }
@@ -419,13 +448,15 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             }
         });
     }
-    private void buildAlertMessageNoGps() {
-        final AlertDialog.Builder builder  = new AlertDialog.Builder(context);
-        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+    private  void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage("Yout GPS seems to be disabled, do you want to enable it?")
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        dialog.cancel();
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -436,4 +467,5 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         final AlertDialog alert = builder.create();
         alert.show();
     }
+
 }
