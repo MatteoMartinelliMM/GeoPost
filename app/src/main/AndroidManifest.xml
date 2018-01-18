@@ -25,7 +25,8 @@
         <activity
             android:name=".View.OverviewActivity"
             android:label="@string/title_activity_overview"
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan"
+            />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCCDjM40uXNWLrv5m857LMDdkaShxW2go0" />

@@ -25,21 +25,22 @@ public class JSONParser {
     public static final String USER_FIELD_LATITUDE = "lat";
     public static final String USER_FIELD_LONGITUDE = "lon";
     public static final String USERNAMES = "usernames";
+    public static final String FRIEND_ALREADY_ADDED = " (Friend already added)";
     private static double latitude;
     private static double longitude;
     private static boolean isEmptyUser = false;
 
-    public static User getPersonalProfile(String toParse){
+    public static User getPersonalProfile(String toParse) {
         User u = new User();
         UserState userState = new UserState();
         try {
             JSONObject userToParse = new JSONObject(toParse);
             Iterator<String> userFileds = userToParse.keys();
-            while (userFileds.hasNext()){
-                if(!isEmptyUser) {
+            while (userFileds.hasNext()) {
+                if (!isEmptyUser) {
                     String userField = userFileds.next();
                     fillInTheUserField(u, userState, userToParse, userField);
-                }else break;
+                } else break;
 
             }
         } catch (JSONException e) {
@@ -48,13 +49,24 @@ public class JSONParser {
         return u;
     }
 
-    public static List<String> getUsernameToFollow(String toParse){
+    public static List<String> getUsernameToFollow(String toParse, ArrayList<User> friendList) {
         List<String> toFollow = new ArrayList<String>();
         try {
+            boolean alreadyFriend = false;
             JSONObject temp = new JSONObject(toParse);
             JSONArray list = temp.getJSONArray(USERNAMES);
-            for(int i= 0 ; i<list.length();i++){
-                toFollow.add(list.getString(i));
+            for (int i = 0; i < list.length(); i++) {
+                String user = list.getString(i);
+                for (User u : friendList) {
+                    if(u.getUserName().equals(user)){
+                        alreadyFriend = true;
+                        break;
+                    }
+                }
+                if (alreadyFriend)
+                    toFollow.add(list.getString(i).concat(FRIEND_ALREADY_ADDED));
+                else
+                    toFollow.add(list.getString(i));
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -78,35 +90,36 @@ public class JSONParser {
     }
 
     private static void parsingUserByUser(List friendList, JSONArray JSONfriendList) throws JSONException {
-        for(int i = 0 ; i<JSONfriendList.length();i++){
+        for (int i = 0; i < JSONfriendList.length(); i++) {
             isEmptyUser = false;
             User u = new User();
             UserState userState = new UserState();
             JSONObject JSONSingleUser = JSONfriendList.getJSONObject(i);
             Iterator<String> userFileds = JSONSingleUser.keys();
 
-            while (userFileds.hasNext()){
-                if(!isEmptyUser) {
+            while (userFileds.hasNext()) {
+                if (!isEmptyUser) {
                     String userField = userFileds.next();
                     fillInTheUserField(u, userState, JSONSingleUser, userField);
-                }else break;
+                } else break;
 
             }
-            if(!isEmptyUser) friendList.add(u);
+            if (!isEmptyUser) friendList.add(u);
+
 
         }
     }
 
-    private static void fillInTheUserField(User u, UserState userState, JSONObject JSONSingleUser,  String userField) throws JSONException {
+    private static void fillInTheUserField(User u, UserState userState, JSONObject JSONSingleUser, String userField) throws JSONException {
 
-        switch (userField){
+        switch (userField) {
             case USER_FIELD_NAME:
                 String userName = JSONSingleUser.getString(userField);
                 u.setUserName(userName);
                 break;
             case USER_FIELD_MSG:
                 String userMsg = JSONSingleUser.getString(userField);
-                if(userMsg.equals("null")){
+                if (userMsg.equals("null")) {
                     isEmptyUser = true;
                     break;
                 }

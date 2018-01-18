@@ -2,9 +2,13 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -106,9 +110,16 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
         searchBar = v.findViewById(R.id.searchBar);
 
         currentActivity = getActivity();
-        currentActivity.setTitle("Friend List");
         context = getActivity();
+        final LocationManager manager = (LocationManager) currentActivity.getSystemService( Context.LOCATION_SERVICE );
 
+        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+            buildAlertMessageNoGps();
+        }
+        if(currentActivity instanceof OverviewActivity) {
+            currentActivity.setTitle("Friend list");;
+            ((OverviewActivity) currentActivity).getSupportActionBar().hide();
+        }
         dialog = new ProgressDialog(context);
         delegate = this;
 
@@ -237,7 +248,7 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200) {
                     String toParse = new String(responseBody);
-                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse);
+                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse,friendList);
                 }
 
                 delegate.waitToComplete(SEARCH_FRIEND);
@@ -246,7 +257,6 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 String s = new String(responseBody);
-                String bo = "";
             }
         });
     }
@@ -272,5 +282,22 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
 
         }
 
+    }
+    private void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 }

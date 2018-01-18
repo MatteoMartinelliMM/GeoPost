@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -40,6 +41,8 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
         public CardView singleFriend;
         public TextView username, stato, posizione;
         public ImageView userProPic;
+        public final ViewGroup.LayoutParams params;
+
 
         public ViewHolder(View v) {
             super(v);
@@ -47,6 +50,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
             username = v.findViewById(R.id.username);
             stato = v.findViewById(R.id.stato);
             posizione = v.findViewById(R.id.distanza);
+            params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
@@ -62,6 +66,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         User friend = friends.get(position);
+
         String sUsername = friend.getUserName();
         String sStato = friend.getLastState().getStato();
         float distance = getFriendDistance(friend);

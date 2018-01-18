@@ -11,8 +11,10 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,6 +63,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     private ArrayList<User> friendList;
     private boolean isRecivedList = false, isRecivedProfile = false;
     private User personalProfile;
+    private RelativeLayout mainLayout;
     private UserBundleToSave userBundle;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -71,7 +74,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             FragmentTransaction ft = fm.beginTransaction();
             switch (item.getItemId()) {
                 case R.id.navigation_list:
-                    getSupportActionBar().hide();
+
                     if (start) {
                         ft.replace(R.id.fragContainer, listFragment, PROFILE + "|" + MAP_FRAGMENT);
                     } else {
@@ -80,7 +83,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                     ft.commit();
                     return true;
                 case R.id.navigation_map:
-                    getSupportActionBar().hide();
+                    mainLayout.setBackgroundColor(getResources().getColor(R.color.defBgColor));
+
                     MapFragmentContainer mapFragment = new MapFragmentContainer();
                     ft = fm.beginTransaction();
                     if (start)
@@ -90,7 +94,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                     ft.commitAllowingStateLoss();
                     return true;
                 case R.id.navigation_profile:
-                    getSupportActionBar().show();
+
                     PersonalProfileFragment profileFragment = new PersonalProfileFragment();
                     ft = fm.beginTransaction();
                     if (start)
@@ -107,11 +111,14 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().hide();
         setContentView(R.layout.activity_overview);
         fm = getSupportFragmentManager();
         mTextMessage = (TextView) findViewById(R.id.message);
         navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        navigation.setVisibility(View.INVISIBLE);
+        mainLayout = findViewById(R.id.container);
 
         listFragment = new UsersListFragment();
         profileFragment = new PersonalProfileFragment();
@@ -231,6 +238,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         navigation.setSelectedItemId(R.id.navigation_map);
         start = true;
 
+    }
+    public BottomNavigationView getBar(){
+        return navigation;
     }
 
     @Override

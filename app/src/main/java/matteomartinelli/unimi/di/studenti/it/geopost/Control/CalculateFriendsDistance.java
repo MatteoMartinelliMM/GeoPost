@@ -18,11 +18,14 @@ public class CalculateFriendsDistance {
     public static final String FRIEND_LOCATION = "FRIEND LOCATION";
     public static final String LOGGED_USER_LOCATION = "loggedUserLocation";
 
-    public static  ArrayList<User> settingForEachUserTheDistanceAndSortTheList(ArrayList<User> friendList, User loggedUser){
-        for (int i = 0 ; i < friendList.size(); i++) {
+    public static ArrayList<User> settingForEachUserTheDistanceAndSortTheList(ArrayList<User> friendList, User loggedUser) {
+        for (int i = 0; i < friendList.size(); i++) {
             User u = friendList.get(i);
-            float distance = getFriendDistance(u,loggedUser);
+            float distance;
+
+            distance = getFriendDistance(u, loggedUser);
             friendList.get(i).getLastState().setDistanceToLoggedUser(distance);
+
         }
         Collections.sort(friendList);
         return friendList;

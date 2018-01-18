@@ -28,12 +28,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/imageView5"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="5dp"
             android:layout_toEndOf="@+id/imageView5"
             android:text="luca_oropallo"
-            android:textSize="18sp"
-            android:layout_marginTop="5dp"
-            android:layout_marginLeft="15dp"
-            android:textColor="@color/colorPrimary"/>
+            android:textColor="@color/colorPrimary"
+            android:textSize="16sp" />
     </RelativeLayout>
 
 </RelativeLayout>

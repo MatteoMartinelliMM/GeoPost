@@ -70,5 +70,7 @@ public class User implements Serializable, Comparable<User> {
     public int compareTo(@NonNull User o) {
         return Float.compare(this.getLastState().getDistanceToLoggedUser(),o.getLastState().getDistanceToLoggedUser());
     }
+
+
 }
 

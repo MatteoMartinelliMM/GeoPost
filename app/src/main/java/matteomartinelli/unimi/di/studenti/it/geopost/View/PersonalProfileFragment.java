@@ -33,12 +33,16 @@ import java.util.ArrayList;
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Pager;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
+import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGOUT;
 
 public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener,TaskDelegate {
@@ -50,6 +54,8 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     private ViewPager statusContainer;
     private TabLayout tabLayout;
     private ProgressDialog dialog;
+    private UserBundleToSave userBundle;
+    private User loggedUser;
     private TaskDelegate delegate;
     public PersonalProfileFragment() {
         // Required empty public constructor
@@ -69,8 +75,18 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         settingXmlViews(v);
         currentActitvity = getActivity();
         context = getActivity();
-        currentActitvity.setTitle(UtilitySharedPreference.getLoggedUsername(context));
+        if(currentActitvity instanceof OverviewActivity) {
+            currentActitvity.setTitle("Profile");;
+            ((OverviewActivity) currentActitvity).getSupportActionBar().show();
+        }
+
         delegate = this;
+        userBundle = (UserBundleToSave) RWObject.readObject(context,USER_BUNDLE);
+        loggedUser = userBundle.getPersonalProfile();
+        userName.setText(loggedUser.getUserName());
+        userState.setText(loggedUser.getLastState().getStato());
+        String userLastStatusPosition = Geocoding.getAdressFromCoord(loggedUser.getLastState(),context);
+        lastPosition.setText(userLastStatusPosition);
         dialog = new ProgressDialog(context);
         setHasOptionsMenu(true);
         settingTabLayout();
