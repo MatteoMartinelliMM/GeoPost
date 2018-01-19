@@ -63,6 +63,8 @@ public class User implements Serializable, Comparable<User> {
     }
 
     public void addTheNewOldStatusOnTopOfTheList(UserState newOld){
+        if(userStates==null)
+            userStates = new ArrayList<>();
         userStates.add(0,newOld);
     }
 

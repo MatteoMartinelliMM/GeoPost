@@ -46,6 +46,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USE
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGOUT;
 
 public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener,TaskDelegate {
+    public static final String LOGGING_OUT = "Logging out...";
     private TextView userName, userState, lastPosition;
     private RecyclerView.LayoutManager lm;
     private boolean done;
@@ -164,7 +165,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if(statusCode==200)
-                    delegate.waitToComplete("");
+                    delegate.waitToComplete(LOGGING_OUT);
             }
 
             @Override
@@ -191,7 +192,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
 
     @Override
     public void waitToComplete(String s) {
-        if(s.equals("")){
+        if(s.equals(LOGGING_OUT)){
             Intent intent = new Intent(context, LoginActivity.class);
             startActivity(intent);
             currentActitvity.finish();

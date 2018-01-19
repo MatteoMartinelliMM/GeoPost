@@ -35,8 +35,8 @@ public class CalculateFriendsDistance {
     private static float getFriendDistance(User friend, User loggedUser) {
         double friendLatitude = friend.getLastState().getLatitude();
         double friendLongitude = friend.getLastState().getLongitude();
-        double loggedUserLongitude = loggedUser.getLastState().getLatitude();
-        double loggedUserLatitude = loggedUser.getLastState().getLongitude();
+       /* double loggedUserLongitude = loggedUser.getLastState().getLatitude();
+        double loggedUserLatitude = loggedUser.getLastState().getLongitude();*/
         Location friendLocation = new Location(FRIEND_LOCATION);
         Location loggedUserLocation = new Location(LOGGED_USER_LOCATION);
         friendLocation.setLongitude(friendLongitude);

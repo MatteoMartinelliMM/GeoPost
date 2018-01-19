@@ -8,7 +8,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,6 +36,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
@@ -53,6 +57,7 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.AutoCompleteTextViewAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.MarkerPlacer;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
@@ -65,9 +70,12 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 
+import static android.content.Context.BIND_IMPORTANT;
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static android.content.Context.SHORTCUT_SERVICE;
+import static android.widget.PopupWindow.INPUT_METHOD_FROM_FOCUSABLE;
 import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
+import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOW;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LAT;
@@ -83,6 +91,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     public static final String ADD_FRIEND = "AddFriend";
     public static final String SEARCH_FRIEND = "SearchFriend";
     public static final String ADD_STATUS = "AddStatus";
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+
     private View v;
     private Context context;
     private Activity currentActivity;
@@ -108,6 +118,9 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private LocationManager locationManager;
     private FusedLocationProviderClient mFusedLocationClient;
     private Location loggedUserLocation;
+    private GoogleApiClient mGoogleApiClient;
+
+
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -124,8 +137,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
-        locationManager = (LocationManager) currentActivity.getSystemService( Context.LOCATION_SERVICE );
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+
 
         return v;
     }
@@ -137,6 +149,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
         context = getActivity();
         currentActivity = getActivity();
+        mapFragment.getMapAsync(this);
         if (currentActivity instanceof OverviewActivity) {
             ((OverviewActivity) currentActivity).getBar().setVisibility(View.VISIBLE);
             ((OverviewActivity) currentActivity).getSupportActionBar().hide();
@@ -148,6 +161,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
         searchBar.setAdapter(ATVAdapter);
         usingATV();
+
 
     }
 
@@ -182,24 +196,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             friendList = userBundle.getFriends();
             personalProfile = userBundle.getPersonalProfile();
         }
-        try {
-            mFusedLocationClient.getLastLocation().addOnSuccessListener(currentActivity, new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    if(location!=null)
-                        personalProfile.setCurrentLatitude(location.getLatitude());
-                        personalProfile.setCurrentLongitude(location.getLongitude());
-
-                }
-            });
-
-        }catch (SecurityException e){
-            Toast.makeText(context,"NO GPS PERMISSION",Toast.LENGTH_SHORT).show();
-        }
-
-
-
-        mapFragment.getMapAsync(this);
 
 
     }
@@ -207,7 +203,19 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+// Check for the integer request code originally supplied to startResolutionForResult().
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
 
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        break;
+                }
+                break;
+
+        }
     }
 
     @Override
@@ -232,13 +240,14 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        double lat  = personalProfile.getCurrentLatitude();
+        double lat = personalProfile.getCurrentLatitude();
         double lon = personalProfile.getCurrentLongitude();
         gMap = googleMap;
         CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
         gMap.moveCamera(zoom);
         gMap.animateCamera(zoom);
-        gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("Hello Map"));
+        gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("HelloMap"));
+
         MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList);
 
     }
@@ -249,25 +258,32 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         dialog.cancel();
         switch (restCall) {
             case ADD_STATUS:
-                UserState toAddInOldStatusList = personalProfile.getLastState();
-                personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
+                userNewStatus = userNewStatus.replace("+"," ");
                 UserState newLastState = new UserState(latitude, longitude, userNewStatus);
+                if (personalProfile.getLastState() != null) {
+                    UserState toAddInOldStatusList = personalProfile.getLastState();
+                    personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
+                }
                 personalProfile.setLastState(newLastState);
+
                 MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
                 userBundle.setPersonalProfile(personalProfile);
                 RWObject.writeObject(context, USER_BUNDLE, userBundle);
                 addStatusPopUp.dismiss();
                 break;
+
             case SEARCH_FRIEND:
                 ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
                 searchBar.setAdapter(ATVAdapter);
                 searchBar.showDropDown();
                 break;
+
             case ADD_FRIEND:
                 Toast.makeText(context, "Friend added :)", Toast.LENGTH_SHORT).show();
                 searchBar.dismissDropDown();
                 searchBar.clearComposingText();
                 break;
+
             default:
                 Toast.makeText(context, restCall, Toast.LENGTH_SHORT).show();
 
@@ -295,7 +311,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         newStatus = customView.findViewById(R.id.status);
         addStatusPopUp.setFocusable(true);
         addStatusPopUp.update();
-        addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, 0);
+        addStatusPopUp.showAtLocation(mRelative, Gravity.CENTER, 0, -140);
         displayingTextCounter(customView);
         if (Build.VERSION.SDK_INT >= 21) {
             addStatusPopUp.setElevation(8.0f);
@@ -311,9 +327,10 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     private void sendTheNewStatusToServer() {
         userNewStatus = newStatus.getText().toString();
+        userNewStatus = userNewStatus.replace(" ","+");
         String cookie = UtilitySharedPreference.getSavedCookie(context);
-        latitude = 15.7;
-        longitude = 12.4;
+        latitude = 45.547707;
+        longitude = 9.254698;
         String sLatitude = String.valueOf(latitude);
         String sLongitude = String.valueOf(longitude);
         dialog.onStart();
@@ -412,6 +429,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     }
 
     private void RestCallAddUser(String userToadd) {
+
         RestCall.get(REL_URL_FOLLOW + cookie + REL_URL_USERNAME + userToadd, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -429,13 +447,16 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         });
     }
 
+
+
     private void RestcallForSearchUsers(Editable editable) {
+
         RestCall.get(REL_URL_USERS + cookie + REL_URL_START_NAME + editable.toString(), null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200) {
                     String toParse = new String(responseBody);
-                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse,friendList);
+                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse, friendList);
                 }
 
                 delegate.waitToComplete(SEARCH_FRIEND);
@@ -448,7 +469,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             }
         });
     }
-    private  void buildAlertMessageNoGps() {
+
+    private void buildAlertMessageNoGps() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setMessage("Yout GPS seems to be disabled, do you want to enable it?")
                 .setCancelable(false)

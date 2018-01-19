@@ -49,7 +49,7 @@ public class UtilitySharedPreference {
         SharedPreferences.Editor editor = preferences.edit();
         editor.clear();
         editor.commit();
-        return checkIfUserIsLogged(context);
+        return !checkIfUserIsLogged(context);
     }
 
 

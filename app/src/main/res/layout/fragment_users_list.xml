@@ -22,7 +22,9 @@
             android:hint="  Search"
             android:textAlignment="textStart"
             android:textColor="#ffffff"
-            android:textColorHint="@color/hintColor" />
+            android:textColorHint="@color/hintColor"
+            android:maxLines="1"
+            android:inputType="text"/>
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/userList"

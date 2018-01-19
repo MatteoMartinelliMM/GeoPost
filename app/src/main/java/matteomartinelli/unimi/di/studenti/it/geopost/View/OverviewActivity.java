@@ -18,13 +18,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.CalculateFriendsDistance;
@@ -35,7 +35,6 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -44,7 +43,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
-public class OverviewActivity extends AppCompatActivity implements TaskDelegate {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate{
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -67,7 +66,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     private User personalProfile;
     private RelativeLayout mainLayout;
     private UserBundleToSave userBundle;
-
+    private FusedLocationProviderClient mFusedLocationClient;
+    public GoogleApiClient googleApiClient;
 
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -119,26 +119,39 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         setContentView(R.layout.activity_overview);
 
         fm = getSupportFragmentManager();
+        settingXmlWidgets();
+
+        inizalizeTheFragments();
+
+        friendList = new ArrayList<>();
+        personalProfile = new User();
+        delegate = this;
+        String userCookie = UtilitySharedPreference.getSavedCookie(this);
+
+        dialog = new ProgressDialog(this);
+        dialog.onStart();
+        gettingFriendListFromServer(userCookie);
+        dialog.onStart();
+        gettingPersonalProfileFromServer(userCookie);
+
+
+
+
+
+    }
+
+    private void inizalizeTheFragments() {
+        listFragment = new UsersListFragment();
+        profileFragment = new PersonalProfileFragment();
+        mapFragment = new MapFragmentContainer();
+    }
+
+    private void settingXmlWidgets() {
         mTextMessage = (TextView) findViewById(R.id.message);
         navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         navigation.setVisibility(View.INVISIBLE);
         mainLayout = findViewById(R.id.container);
-
-        listFragment = new UsersListFragment();
-        profileFragment = new PersonalProfileFragment();
-        mapFragment = new MapFragmentContainer();
-        friendList = new ArrayList<>();
-        personalProfile = new User();
-        delegate = this;
-        String userCookie = UtilitySharedPreference.getSavedCookie(this);
-        dialog = new ProgressDialog(this);
-        dialog.onStart();
-        gettingFriendStatusFromServer(userCookie);
-        dialog.onStart();
-        gettingPersonalProfileFromServer(userCookie);
-
-
     }
 
     private void gettingPersonalProfileFromServer(String userCookie) {
@@ -160,7 +173,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         });
     }
 
-    private void gettingFriendStatusFromServer(String userCookie) {
+    private void gettingFriendListFromServer(String userCookie) {
         RestCall.get(REL_URL_FOLLOWER+userCookie, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -252,4 +265,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     public void onBackPressed() {
         super.onBackPressed();
     }
+
+    public FusedLocationProviderClient getmFusedLocationClient() {
+        return mFusedLocationClient;
+    }
+
+
 }

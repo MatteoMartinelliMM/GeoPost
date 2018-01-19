@@ -63,10 +63,9 @@ public class JSONParser {
                         break;
                     }
                 }
-                if (alreadyFriend)
-                    toFollow.add(list.getString(i).concat(FRIEND_ALREADY_ADDED));
-                else
+                if(!alreadyFriend)
                     toFollow.add(list.getString(i));
+
             }
         } catch (JSONException e) {
             e.printStackTrace();

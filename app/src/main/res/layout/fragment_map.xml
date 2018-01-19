@@ -25,7 +25,10 @@
             android:hint="  Search"
             android:textAlignment="textStart"
             android:textColor="#ffffff"
-            android:textColorHint="@color/hintColor" />
+            android:textColorHint="@color/hintColor"
+            android:maxLines="1"
+            android:inputType="text"
+            />
 
         <fragment
             android:id="@+id/mapFragment"
