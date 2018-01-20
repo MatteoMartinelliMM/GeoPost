@@ -1,6 +1,7 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -39,6 +40,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -57,9 +60,11 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.AutoCompleteTextViewAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.GPSTracker;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.MarkerPlacer;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.MyLocationListner;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
@@ -114,12 +119,13 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private ArrayList<String> usernames;
     private AutoCompleteTextViewAdapter ATVAdapter;
     private String cookie;
-    private final AlertDialog.Builder allertBuilder = null;
+    private LocationRequest locationRequest;
     private LocationManager locationManager;
-    private FusedLocationProviderClient mFusedLocationClient;
     private Location loggedUserLocation;
-    private GoogleApiClient mGoogleApiClient;
-
+    private AlertDialog alert;
+    private GPSTracker gpsTracker;
+    private FusedLocationProviderClient fusedLocationClient;
+    private GoogleApiClient googleApiClient;
 
     public MapFragmentContainer() {
         // Required empty public constructor
@@ -132,6 +138,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         friendList = new ArrayList<>();
         delegate = this;
         usernames = new ArrayList<>();
+        gpsTracker = new GPSTracker();
+
     }
 
     @Override
@@ -142,27 +150,35 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         return v;
     }
 
+    private void settingTheLocationRequestPreference() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
     private void settingTheContextNView(LayoutInflater inflater, final ViewGroup container) {
         v = inflater.inflate(R.layout.fragment_map, container, false);
-        addStatus = v.findViewById(R.id.addStatus);
-        addStatus.setOnClickListener(this);
-        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
+
         context = getActivity();
         currentActivity = getActivity();
-        mapFragment.getMapAsync(this);
+
         if (currentActivity instanceof OverviewActivity) {
             ((OverviewActivity) currentActivity).getBar().setVisibility(View.VISIBLE);
             ((OverviewActivity) currentActivity).getSupportActionBar().hide();
         }
+
         dialog = new ProgressDialog(context);
+
         mRelative = v.findViewById(R.id.mRelative);
         searchBar = v.findViewById(R.id.searchBarMap);
-        cookie = UtilitySharedPreference.getSavedCookie(context);
+
+        addStatus = v.findViewById(R.id.addStatus);
+        addStatus.setOnClickListener(this);
+
         ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
         searchBar.setAdapter(ATVAdapter);
         usingATV();
-
-
     }
 
     @Override
@@ -184,14 +200,25 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         askingForUsersGpsPermission();
+        MyLocationListner locationListner = new MyLocationListner();
+        if (currentActivity instanceof OverviewActivity)
+            googleApiClient = ((OverviewActivity) currentActivity).getGoogleApiClient();
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient,locationRequest,gpsTracker);
+        settingTheLocationRequestPreference();
+
+        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
+        mapFragment.getMapAsync(this);
+
         userBundle = new UserBundleToSave();
         friendList = new ArrayList<>();
         personalProfile = new User();
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
+
         if (userBundle != null) {
             friendList = userBundle.getFriends();
             personalProfile = userBundle.getPersonalProfile();
@@ -208,9 +235,10 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-
+                        alert.dismiss();
                         break;
                     case Activity.RESULT_CANCELED:
+                        alert.show();
                         break;
                 }
                 break;
@@ -269,6 +297,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
                 userBundle.setPersonalProfile(personalProfile);
                 RWObject.writeObject(context, USER_BUNDLE, userBundle);
+                MarkerPlacer.addNewStatusMarker(gMap,personalProfile);
                 addStatusPopUp.dismiss();
                 break;
 
@@ -486,8 +515,13 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                         dialog.cancel();
                     }
                 });
-        final AlertDialog alert = builder.create();
+        alert = builder.create();
         alert.show();
     }
 
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+    }
 }

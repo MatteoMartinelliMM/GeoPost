@@ -45,9 +45,11 @@ public class MarkerPlacer {
         latLng = new LatLng(latitude, longitude);
         userName = u.getUserName();
         status = u.getLastState().getStato();
-        newMarkerOption = new MarkerOptions().position(latLng).title(userName).snippet(status).alpha(0.7f);
+        newMarkerOption = new MarkerOptions().position(latLng).title(userName).snippet(status);
         if (isTheLoggedUser)
             newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+        else
+            newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         map.addMarker(newMarkerOption);
     }
 }
