@@ -11,7 +11,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
+
+import com.google.android.gms.location.LocationListener;
+
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,6 +41,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -52,7 +56,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
+
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
 
@@ -61,10 +65,10 @@ import java.util.ArrayList;
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.AutoCompleteTextViewAdapter;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.GPSTracker;
-import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
+
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.MarkerPlacer;
-import matteomartinelli.unimi.di.studenti.it.geopost.Control.MyLocationListner;
+
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
@@ -75,12 +79,9 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 
-import static android.content.Context.BIND_IMPORTANT;
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
-import static android.content.Context.SHORTCUT_SERVICE;
-import static android.widget.PopupWindow.INPUT_METHOD_FROM_FOCUSABLE;
 import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
-import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
+
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_FOLLOW;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LAT;
@@ -92,11 +93,12 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_USERS;
 
 
-public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate, View.OnClickListener {
+public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate, View.OnClickListener, LocationListener {
     public static final String ADD_FRIEND = "AddFriend";
     public static final String SEARCH_FRIEND = "SearchFriend";
     public static final String ADD_STATUS = "AddStatus";
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+    public static final String HAVE_A_POSITION = "HaveAPosition";
 
     private View v;
     private Context context;
@@ -126,6 +128,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private GPSTracker gpsTracker;
     private FusedLocationProviderClient fusedLocationClient;
     private GoogleApiClient googleApiClient;
+    private PendingResult<Status> prova;
 
     public MapFragmentContainer() {
         // Required empty public constructor
@@ -204,16 +207,20 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        gettingUserDataFromLocal();
         askingForUsersGpsPermission();
-        MyLocationListner locationListner = new MyLocationListner();
+        settingTheLocationRequestPreference();
         if (currentActivity instanceof OverviewActivity)
             googleApiClient = ((OverviewActivity) currentActivity).getGoogleApiClient();
-        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient,locationRequest,gpsTracker);
-        settingTheLocationRequestPreference();
+
+        prova = LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
 
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
         mapFragment.getMapAsync(this);
 
+    }
+
+    private void gettingUserDataFromLocal() {
         userBundle = new UserBundleToSave();
         friendList = new ArrayList<>();
         personalProfile = new User();
@@ -223,8 +230,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             friendList = userBundle.getFriends();
             personalProfile = userBundle.getPersonalProfile();
         }
-
-
     }
 
     @Override
@@ -268,13 +273,9 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        double lat = personalProfile.getCurrentLatitude();
-        double lon = personalProfile.getCurrentLongitude();
+        double lat, lon;
         gMap = googleMap;
-        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
-        gMap.moveCamera(zoom);
-        gMap.animateCamera(zoom);
-        gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("HelloMap"));
+
 
         MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList);
 
@@ -286,7 +287,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         dialog.cancel();
         switch (restCall) {
             case ADD_STATUS:
-                userNewStatus = userNewStatus.replace("+"," ");
+                userNewStatus = userNewStatus.replace("+", " ");
                 UserState newLastState = new UserState(latitude, longitude, userNewStatus);
                 if (personalProfile.getLastState() != null) {
                     UserState toAddInOldStatusList = personalProfile.getLastState();
@@ -297,7 +298,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
                 userBundle.setPersonalProfile(personalProfile);
                 RWObject.writeObject(context, USER_BUNDLE, userBundle);
-                MarkerPlacer.addNewStatusMarker(gMap,personalProfile);
+                MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
                 addStatusPopUp.dismiss();
                 break;
 
@@ -312,7 +313,18 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 searchBar.dismissDropDown();
                 searchBar.clearComposingText();
                 break;
-
+            case HAVE_A_POSITION:
+                if(gMap!=null) {
+                    personalProfile.setCurrentLongitude(gpsTracker.getLongitude());
+                    personalProfile.setCurrentLatitude(gpsTracker.getLatitude());
+                    double lat = personalProfile.getCurrentLatitude();
+                    double lon = personalProfile.getCurrentLongitude();
+                    CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
+                    gMap.moveCamera(zoom);
+                    gMap.animateCamera(zoom);
+                    gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("HelloMap"));
+                }
+                break;
             default:
                 Toast.makeText(context, restCall, Toast.LENGTH_SHORT).show();
 
@@ -356,7 +368,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     private void sendTheNewStatusToServer() {
         userNewStatus = newStatus.getText().toString();
-        userNewStatus = userNewStatus.replace(" ","+");
+        userNewStatus = userNewStatus.replace(" ", "+");
         String cookie = UtilitySharedPreference.getSavedCookie(context);
         latitude = 45.547707;
         longitude = 9.254698;
@@ -477,7 +489,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     }
 
 
-
     private void RestcallForSearchUsers(Editable editable) {
 
         RestCall.get(REL_URL_USERS + cookie + REL_URL_START_NAME + editable.toString(), null, new AsyncHttpResponseHandler() {
@@ -519,9 +530,15 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         alert.show();
     }
 
-
     @Override
     public void onLocationChanged(Location location) {
-
+        dialog.onStart();
+        if (loggedUserLocation == null) {
+            loggedUserLocation = location;
+        } else if (loggedUserLocation.getAccuracy() < location.getAccuracy()) {
+            loggedUserLocation = location;
+        }
+        delegate.waitToComplete(HAVE_A_POSITION);
     }
 }
+

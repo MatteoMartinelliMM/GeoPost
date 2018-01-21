@@ -45,7 +45,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGOUT;
 
-public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener,TaskDelegate {
+public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener, TaskDelegate {
     public static final String LOGGING_OUT = "Logging out...";
     private TextView userName, userState, lastPosition;
     private RecyclerView.LayoutManager lm;
@@ -58,6 +58,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     private UserBundleToSave userBundle;
     private User loggedUser;
     private TaskDelegate delegate;
+
     public PersonalProfileFragment() {
         // Required empty public constructor
     }
@@ -76,18 +77,22 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         settingXmlViews(v);
         currentActitvity = getActivity();
         context = getActivity();
-        if(currentActitvity instanceof OverviewActivity) {
-            currentActitvity.setTitle("Profile");;
+        if (currentActitvity instanceof OverviewActivity) {
+            currentActitvity.setTitle("Profile");
             ((OverviewActivity) currentActitvity).getSupportActionBar().show();
         }
 
         delegate = this;
-        userBundle = (UserBundleToSave) RWObject.readObject(context,USER_BUNDLE);
+        userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
         loggedUser = userBundle.getPersonalProfile();
-        userName.setText(loggedUser.getUserName());
-        userState.setText(loggedUser.getLastState().getStato());
-        String userLastStatusPosition = Geocoding.getAdressFromCoord(loggedUser.getLastState(),context);
-        lastPosition.setText(userLastStatusPosition);
+        if (loggedUser != null) {
+            userName.setText(loggedUser.getUserName());
+            userState.setText(loggedUser.getLastState().getStato());
+            String userLastStatusPosition = Geocoding.getAdressFromCoord(loggedUser.getLastState(), context);
+            lastPosition.setText(userLastStatusPosition);
+        }else
+            userName.setText(UtilitySharedPreference.getLoggedUsername(context));
+
         dialog = new ProgressDialog(context);
         setHasOptionsMenu(true);
         settingTabLayout();
@@ -114,11 +119,12 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Pager adapter = new Pager(getChildFragmentManager(),tabLayout.getTabCount());
+        Pager adapter = new Pager(getChildFragmentManager(), tabLayout.getTabCount());
         statusContainer.setAdapter(adapter);
         statusContainer.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.setOnTabSelectedListener(this);
     }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -149,7 +155,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
             case R.id.logout:
                 String cookie = UtilitySharedPreference.getSavedCookie(context);
                 done = UtilitySharedPreference.logoutTheCurrentUser(context);
-                if(done) {
+                if (done) {
                     tryToLogout(cookie);
                 }
                 break;
@@ -164,13 +170,13 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         RestCall.get(REL_URL_LOGOUT + cookie, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                if(statusCode==200)
+                if (statusCode == 200)
                     delegate.waitToComplete(LOGGING_OUT);
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                delegate.waitToComplete(statusCode+"");
+                delegate.waitToComplete(statusCode + "");
             }
         });
     }
@@ -192,7 +198,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
 
     @Override
     public void waitToComplete(String s) {
-        if(s.equals(LOGGING_OUT)){
+        if (s.equals(LOGGING_OUT)) {
             Intent intent = new Intent(context, LoginActivity.class);
             startActivity(intent);
             currentActitvity.finish();

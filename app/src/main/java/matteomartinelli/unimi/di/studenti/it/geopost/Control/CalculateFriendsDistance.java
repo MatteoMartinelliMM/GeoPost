@@ -28,6 +28,7 @@ public class CalculateFriendsDistance {
 
         }
         Collections.sort(friendList);
+
         return friendList;
 
     }

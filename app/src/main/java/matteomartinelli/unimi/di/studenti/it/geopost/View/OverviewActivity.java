@@ -1,16 +1,22 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.ActionBar;
 
 import android.app.ProgressDialog;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,6 +37,7 @@ import java.util.ArrayList;
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.CalculateFriendsDistance;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.CheckNetStatus;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.GPSTracker;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
@@ -47,7 +54,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
-public class OverviewActivity extends AppCompatActivity implements TaskDelegate,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -72,10 +79,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     private User personalProfile;
     private RelativeLayout mainLayout;
     private UserBundleToSave userBundle;
-    private FusedLocationProviderClient mFusedLocationClient;
+    private GPSTracker gpsTracker;
     public GoogleApiClient googleApiClient;
     private ArrayList<Integer> stack;
-    private boolean toAdd = true;
+    private boolean toAdd = true, userPermission=false;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -85,7 +92,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             FragmentTransaction ft = fm.beginTransaction();
             switch (item.getItemId()) {
                 case R.id.navigation_list:
-                    if(toAdd) pushUserChoiceInStack(R.id.navigation_list);
+                    if (toAdd) pushUserChoiceInStack(R.id.navigation_list);
                     if (start) {
                         ft.replace(R.id.fragContainer, listFragment, PROFILE + "|" + MAP_FRAGMENT);
                     } else {
@@ -95,7 +102,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
                     return true;
                 case R.id.navigation_map:
                     mainLayout.setBackgroundColor(getResources().getColor(R.color.defBgColor));
-                    if(toAdd) pushUserChoiceInStack(R.id.navigation_map);
+                    if (toAdd) pushUserChoiceInStack(R.id.navigation_map);
                     MapFragmentContainer mapFragment = new MapFragmentContainer();
                     ft = fm.beginTransaction();
                     if (start)
@@ -105,7 +112,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
                     ft.commitAllowingStateLoss();
                     return true;
                 case R.id.navigation_profile:
-                    if(toAdd) pushUserChoiceInStack(R.id.navigation_profile);
+                    if (toAdd) pushUserChoiceInStack(R.id.navigation_profile);
                     PersonalProfileFragment profileFragment = new PersonalProfileFragment();
                     ft = fm.beginTransaction();
                     if (start)
@@ -128,22 +135,25 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         stack = new ArrayList<>();
         fm = getSupportFragmentManager();
         settingXmlWidgets();
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
+        gpsTracker = new GPSTracker();
         inizalizeTheFragments();
-
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            userPermission = true;
+            return;
+        }
         friendList = new ArrayList<>();
         personalProfile = new User();
         delegate = this;
         String userCookie = UtilitySharedPreference.getSavedCookie(this);
 
-        if(googleApiClient==null){
-            googleApiClient = new GoogleApiClient.Builder(this)
+        googleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
                     .build();
-        }
+
+        googleApiClient.connect();
+
 
         dialog = new ProgressDialog(this);
         if (CheckNetStatus.isInternetAvailable(this)) {
@@ -268,8 +278,6 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             userBundle.setFriends(friendList);
             userBundle.setPersonalProfile(personalProfile);
             RWObject.writeObject(this, USER_BUNDLE, userBundle);
-            UserBundleToSave prova = (UserBundleToSave) RWObject.readObject(this, USER_BUNDLE);
-            String se = "CIAO";
 
         } else if (!s.equals("200"))
             Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
@@ -297,16 +305,13 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         stack.add(0, selectedId);
     }
 
-    private int popCurrentUserChoiceAndTakeTheLastOne(){
+    private int popCurrentUserChoiceAndTakeTheLastOne() {
         stack.remove(0);
         int choice = stack.get(0);
 
         return choice;
     }
 
-    public FusedLocationProviderClient getmFusedLocationClient() {
-        return mFusedLocationClient;
-    }
 
     public GoogleApiClient getGoogleApiClient() {
         return googleApiClient;
@@ -314,8 +319,13 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-
-    }
+        if(googleApiClient.isConnected() && userPermission)
+            try {
+                Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+            }catch (SecurityException e){
+                Log.i("SecExc",e.toString());
+            }
+        }
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -325,5 +335,18 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(googleApiClient.isConnected())
+            googleApiClient.disconnect();
     }
 }

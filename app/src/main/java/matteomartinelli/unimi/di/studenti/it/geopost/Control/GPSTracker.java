@@ -10,7 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
+import com.google.android.gms.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -29,7 +29,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.View.OverviewActivity;
  * Created by teo on 13/01/18.
  */
 
-public class GPSTracker implements  com.google.android.gms.location.LocationListener{
+public class GPSTracker implements  LocationListener{
     private double latitude;
     private double longitude;
     private boolean isRunning = false;
@@ -64,6 +64,7 @@ public class GPSTracker implements  com.google.android.gms.location.LocationList
     public void onLocationChanged(Location location) {
         if(mLocation == null){
             settingLocationAndDoubleLatLng(location);
+            isRunning = true;
         } else if(location.getAccuracy() > mLocation.getAccuracy()){
             settingLocationAndDoubleLatLng(location);
         }
