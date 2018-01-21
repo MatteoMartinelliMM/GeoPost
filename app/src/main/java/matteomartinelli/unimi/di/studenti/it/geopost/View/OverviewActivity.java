@@ -29,6 +29,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
@@ -83,7 +85,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     public GoogleApiClient googleApiClient;
     private ArrayList<Integer> stack;
     private boolean toAdd = true, userPermission=false;
-
+    private LocationRequest locationRequest;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -319,13 +321,14 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        if(googleApiClient.isConnected() && userPermission)
+        if (googleApiClient.isConnected() && userPermission)
+            settingTheLocationRequestPreference();
             try {
                 Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
             }catch (SecurityException e){
-                Log.i("SecExc",e.toString());
+                Log.i("Bo",e.toString());
             }
-        }
+    }
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -346,7 +349,20 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     @Override
     protected void onPause() {
         super.onPause();
-        if(googleApiClient.isConnected())
+        if(googleApiClient.isConnected()){
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, gpsTracker);
             googleApiClient.disconnect();
+        }
+    }
+
+    private void settingTheLocationRequestPreference() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    public LocationRequest getLocationRequest() {
+        return locationRequest;
     }
 }

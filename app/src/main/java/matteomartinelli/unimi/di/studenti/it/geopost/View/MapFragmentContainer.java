@@ -153,12 +153,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         return v;
     }
 
-    private void settingTheLocationRequestPreference() {
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
+
 
     private void settingTheContextNView(LayoutInflater inflater, final ViewGroup container) {
         v = inflater.inflate(R.layout.fragment_map, container, false);
@@ -209,11 +204,13 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         super.onActivityCreated(savedInstanceState);
         gettingUserDataFromLocal();
         askingForUsersGpsPermission();
-        settingTheLocationRequestPreference();
-        if (currentActivity instanceof OverviewActivity)
-            googleApiClient = ((OverviewActivity) currentActivity).getGoogleApiClient();
 
-        prova = LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+        if (currentActivity instanceof OverviewActivity) {
+            googleApiClient = ((OverviewActivity) currentActivity).getGoogleApiClient();
+            locationRequest = ((OverviewActivity) currentActivity).getLocationRequest();
+        }
+        if(googleApiClient.isConnected() && locationRequest!=null)
+            prova = LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
 
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
         mapFragment.getMapAsync(this);
@@ -313,18 +310,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 searchBar.dismissDropDown();
                 searchBar.clearComposingText();
                 break;
-            case HAVE_A_POSITION:
-                if(gMap!=null) {
-                    personalProfile.setCurrentLongitude(gpsTracker.getLongitude());
-                    personalProfile.setCurrentLatitude(gpsTracker.getLatitude());
-                    double lat = personalProfile.getCurrentLatitude();
-                    double lon = personalProfile.getCurrentLongitude();
-                    CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
-                    gMap.moveCamera(zoom);
-                    gMap.animateCamera(zoom);
-                    gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("HelloMap"));
-                }
-                break;
+
             default:
                 Toast.makeText(context, restCall, Toast.LENGTH_SHORT).show();
 
@@ -533,12 +519,19 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
         dialog.onStart();
-        if (loggedUserLocation == null) {
-            loggedUserLocation = location;
-        } else if (loggedUserLocation.getAccuracy() < location.getAccuracy()) {
-            loggedUserLocation = location;
+        if (loggedUserLocation == null) loggedUserLocation = location;
+        else if (loggedUserLocation.getAccuracy() < location.getAccuracy()) loggedUserLocation = location;
+
+        if(gMap!=null) {
+            personalProfile.setCurrentLongitude(loggedUserLocation.getLongitude());
+            personalProfile.setCurrentLatitude(loggedUserLocation.getLatitude());
+            double lat = personalProfile.getCurrentLatitude();
+            double lon = personalProfile.getCurrentLongitude();
+            CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
+            gMap.moveCamera(zoom);
+            gMap.animateCamera(zoom);
+            gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("HelloMap"));
         }
-        delegate.waitToComplete(HAVE_A_POSITION);
     }
 }
 
