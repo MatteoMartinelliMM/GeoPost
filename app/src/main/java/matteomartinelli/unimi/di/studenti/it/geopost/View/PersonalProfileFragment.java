@@ -87,9 +87,13 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         loggedUser = userBundle.getPersonalProfile();
         if (loggedUser != null) {
             userName.setText(loggedUser.getUserName());
-            userState.setText(loggedUser.getLastState().getStato());
-            String userLastStatusPosition = Geocoding.getAdressFromCoord(loggedUser.getLastState(), context);
-            lastPosition.setText(userLastStatusPosition);
+            if(loggedUser.getLastState()!= null) {
+                userState.setText(loggedUser.getLastState().getStato());
+                String userLastStatusPosition = Geocoding.getAdressFromCoord(loggedUser.getLastState(), context);
+                lastPosition.setText(userLastStatusPosition);
+            }
+            else userState.setText("");
+
         }else
             userName.setText(UtilitySharedPreference.getLoggedUsername(context));
 

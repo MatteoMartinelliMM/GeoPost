@@ -34,10 +34,9 @@ public class GPSTracker implements  LocationListener{
     private double longitude;
     private boolean isRunning = false;
     private Location mLocation;
-
+    private com.google.android.gms.location.LocationListener locationListener;
     public GPSTracker() {
-
-
+        locationListener = this;
     }
 
      public boolean isRunning() {

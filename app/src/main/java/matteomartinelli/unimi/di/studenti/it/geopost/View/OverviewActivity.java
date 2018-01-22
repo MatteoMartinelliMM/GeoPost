@@ -56,7 +56,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
-public class OverviewActivity extends AppCompatActivity implements TaskDelegate, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate {
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -148,7 +148,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         delegate = this;
         String userCookie = UtilitySharedPreference.getSavedCookie(this);
 
-        googleApiClient = new GoogleApiClient.Builder(this)
+        /*googleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
@@ -156,14 +156,14 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
         googleApiClient.connect();
 
-
+            */
         dialog = new ProgressDialog(this);
-        if (CheckNetStatus.isInternetAvailable(this)) {
+//     if (CheckNetStatus.isInternetAvailable(this)) {
             dialog.onStart();
             gettingFriendListFromServer(userCookie);
             dialog.onStart();
             gettingPersonalProfileFromServer(userCookie);
-        } else {
+        /*} else {
             dialog.onStart();
             Snackbar.make(mainLayout, NO_INTERNET, Snackbar.LENGTH_SHORT).show();
             userBundle = (UserBundleToSave) RWObject.readObject(this, USER_BUNDLE);
@@ -172,8 +172,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
                 friendList = userBundle.getFriends();
                 personalProfile = userBundle.getPersonalProfile();
             } else
-                delegate.waitToComplete(NO_LOCAL_DATA);
-        }
+                delegate.waitToComplete(NO_LOCAL_DATA); */
+        //}
 
 
     }
@@ -283,6 +283,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
         } else if (!s.equals("200"))
             Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+        else if(NO_LOCAL_DATA.equals(s)) {
+            Toast.makeText(this,"Data are not available",Toast.LENGTH_SHORT).show();
+        }
         navigation.setSelectedItemId(R.id.navigation_map);
         start = true;
 
@@ -319,48 +322,13 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         return googleApiClient;
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        if (googleApiClient.isConnected() && userPermission)
-            settingTheLocationRequestPreference();
-            try {
-                Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-            }catch (SecurityException e){
-                Log.i("Bo",e.toString());
-            }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-    }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if(googleApiClient.isConnected()){
-            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, gpsTracker);
-            googleApiClient.disconnect();
-        }
+
     }
 
-    private void settingTheLocationRequestPreference() {
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
 
     public LocationRequest getLocationRequest() {
         return locationRequest;

@@ -93,7 +93,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_USERS;
 
 
-public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate, View.OnClickListener, LocationListener {
+public class MapFragmentContainer extends Fragment implements OnMapReadyCallback, TaskDelegate, View.OnClickListener, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     public static final String ADD_FRIEND = "AddFriend";
     public static final String SEARCH_FRIEND = "SearchFriend";
     public static final String ADD_STATUS = "AddStatus";
@@ -148,11 +148,45 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
-
-
+        accesFineLocattionPermissionChecking();
+        googleApiClient = new GoogleApiClient.Builder(context)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        googleApiClient.connect();
+        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
+        mapFragment.getMapAsync(this);
         return v;
     }
 
+    private void accesFineLocattionPermissionChecking() {
+        if (ContextCompat.checkSelfPermission(currentActivity,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(currentActivity,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(currentActivity,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
+    }
 
 
     private void settingTheContextNView(LayoutInflater inflater, final ViewGroup container) {
@@ -179,12 +213,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         usingATV();
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-
-    }
 
     @Override
     public void onAttach(Context context) {
@@ -203,18 +231,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         gettingUserDataFromLocal();
-        askingForUsersGpsPermission();
-
-        if (currentActivity instanceof OverviewActivity) {
-            googleApiClient = ((OverviewActivity) currentActivity).getGoogleApiClient();
-            locationRequest = ((OverviewActivity) currentActivity).getLocationRequest();
-        }
-        if(googleApiClient.isConnected() && locationRequest!=null)
-            prova = LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
-
-        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
-        mapFragment.getMapAsync(this);
-
     }
 
     private void gettingUserDataFromLocal() {
@@ -237,7 +253,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        alert.dismiss();
+                        checkAndStartLocationUpdate();
                         break;
                     case Activity.RESULT_CANCELED:
                         alert.show();
@@ -270,7 +286,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        double lat, lon;
         gMap = googleMap;
 
 
@@ -291,8 +306,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                     personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
                 }
                 personalProfile.setLastState(newLastState);
-
-                MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
                 userBundle.setPersonalProfile(personalProfile);
                 RWObject.writeObject(context, USER_BUNDLE, userBundle);
                 MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
@@ -397,22 +410,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         });
     }
 
-    private void askingForUsersGpsPermission() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(currentActivity, Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-                ActivityCompat.requestPermissions(currentActivity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-
-            }
-        }
-    }
 
     private void usingATV() {
         searchBar.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -514,23 +511,55 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 });
         alert = builder.create();
         alert.show();
-    }
+    } //TODO: fix ask for gps
 
     @Override
     public void onLocationChanged(Location location) {
-        dialog.onStart();
-        if (loggedUserLocation == null) loggedUserLocation = location;
-        else if (loggedUserLocation.getAccuracy() < location.getAccuracy()) loggedUserLocation = location;
+        if (loggedUserLocation == null) {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        } else if (loggedUserLocation.getAccuracy() < location.getAccuracy()) {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        }
+        if (gMap != null) {
+            gMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("HelloMap"));
+            CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15);
 
-        if(gMap!=null) {
-            personalProfile.setCurrentLongitude(loggedUserLocation.getLongitude());
-            personalProfile.setCurrentLatitude(loggedUserLocation.getLatitude());
-            double lat = personalProfile.getCurrentLatitude();
-            double lon = personalProfile.getCurrentLongitude();
-            CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15);
             gMap.moveCamera(zoom);
             gMap.animateCamera(zoom);
-            gMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("HelloMap"));
+
+        }
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        checkAndStartLocationUpdate();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    private void checkAndStartLocationUpdate() {
+        if (googleApiClient.isConnected()) {
+            LocationRequest mLocationRequest = new LocationRequest();
+            mLocationRequest.setInterval(10000);
+            mLocationRequest.setFastestInterval(5000);
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            try {
+                LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, mLocationRequest, this);
+            } catch (SecurityException e) {
+                // this should not happen because the exception fires when the user has not
+                // granted permission to use location, but we already checked this
+                e.printStackTrace();
+            }
         }
     }
 }
