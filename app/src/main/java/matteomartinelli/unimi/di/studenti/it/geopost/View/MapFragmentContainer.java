@@ -241,7 +241,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     }
 
-    @SuppressLint("MissingPermission")
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
