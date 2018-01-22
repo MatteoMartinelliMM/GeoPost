@@ -395,10 +395,9 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         userNewStatus = newStatus.getText().toString();
         userNewStatus = userNewStatus.replace(" ", "+");
         String cookie = UtilitySharedPreference.getSavedCookie(context);
-        latitude = 45.547707;
-        longitude = 9.254698;
-        String sLatitude = String.valueOf(latitude);
-        String sLongitude = String.valueOf(longitude);
+        checkAndStartLocationUpdate();
+        String sLatitude = String.valueOf(personalProfile.getCurrentLatitude()); //TODO CHECK IF IS CORRECT
+        String sLongitude = String.valueOf(personalProfile.getCurrentLongitude());
         dialog.onStart();
         RestCall.post(REL_URL_STATUS_UPDATE + cookie + REL_URL_MESSAGE + userNewStatus + REL_URL_LAT + sLatitude + REL_URL_LON + sLongitude, null, new AsyncHttpResponseHandler() {
             @Override
@@ -585,12 +584,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     private void checkAndStartLocationUpdate() {
         if (googleApiClientReady && permissionGranted) {
-            LocationRequest mLocationRequest = new LocationRequest();
-            mLocationRequest.setInterval(10000);
-            mLocationRequest.setFastestInterval(5000);
-            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            locationRequest = new LocationRequest();
+            locationRequest.setInterval(10000);
+            locationRequest.setFastestInterval(5000);
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             try {
-                LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, mLocationRequest, this);
+                LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
             } catch (SecurityException e) {
                 // this should not happen because the exception fires when the user has not
                 // granted permission to use location, but we already checked this
