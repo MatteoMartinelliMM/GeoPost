@@ -21,7 +21,8 @@ public class RWObject {
         ObjectInputStream objReader = null;
         Object readedObject = null;
         try {
-            inputStream = context.openFileInput(fileName);
+            String username = UtilitySharedPreference.getLoggedUsername(context);
+            inputStream = context.openFileInput(fileName+username);
             ObjectInputStream objectInputStream = objReader = new ObjectInputStream(inputStream);
             readedObject = objReader.readObject();
             objectInputStream.close();
@@ -44,7 +45,8 @@ public class RWObject {
         FileOutputStream fileOutputStream = null;
         ObjectOutputStream objectWriter = null;
         try {
-            fileOutputStream = context.openFileOutput(fileName, context.MODE_PRIVATE);
+            String username = UtilitySharedPreference.getLoggedUsername(context);
+            fileOutputStream = context.openFileOutput(fileName+username, context.MODE_PRIVATE);
             objectWriter = new ObjectOutputStream(fileOutputStream);
             objectWriter.writeObject(toWrite);
             objectWriter.close();

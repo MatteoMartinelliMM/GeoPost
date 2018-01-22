@@ -1,53 +1,67 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.Control;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Service;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Location;
-import com.google.android.gms.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
-import matteomartinelli.unimi.di.studenti.it.geopost.View.OverviewActivity;
+import org.greenrobot.eventbus.EventBus;
+
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.PositionEvent;
 
 /**
  * Created by teo on 13/01/18.
  */
 
-public class GPSTracker implements  LocationListener{
+public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private double latitude;
     private double longitude;
     private boolean isRunning = false;
     private Location mLocation;
-    private com.google.android.gms.location.LocationListener locationListener;
-    public GPSTracker() {
-        locationListener = this;
+    private GoogleApiClient googleApiClient;
+    private Context context;
+    private boolean googleApiClientReady = false, permissionGranted = false;
+    private LocationRequest locationRequest;
+
+    public GPSTracker(Context context, boolean permissionGranted) {
+        this.context = context;
+        this.permissionGranted = permissionGranted;
+        googleApiClient = new GoogleApiClient.Builder(context)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        googleApiClient.connect();
     }
 
-     public boolean isRunning() {
+    public LatLng getNewLocation() {
+        checkAndStartLocationUpdate();
+        return getLatLng();
+    }
+
+    public void askForNewLocation() {
+        checkAndStartLocationUpdate();
+    }
+
+    public boolean isRunning() {
         return this.isRunning;
     }
 
-    public LatLng getLatLng(){
-        return new LatLng(latitude,longitude);
+    public LatLng getLatLng() {
+        return new LatLng(latitude, longitude);
     }
 
-    public Location getLocation(){
+    public Location getLocation() {
         return mLocation;
     }
 
@@ -59,20 +73,57 @@ public class GPSTracker implements  LocationListener{
         return longitude;
     }
 
+    public boolean isReady() {
+        return googleApiClientReady && permissionGranted;
+    }
+
     @Override
     public void onLocationChanged(Location location) {
-        if(mLocation == null){
-            settingLocationAndDoubleLatLng(location);
-            isRunning = true;
-        } else if(location.getAccuracy() > mLocation.getAccuracy()){
-            settingLocationAndDoubleLatLng(location);
+        if (mLocation == null) {
+            settingLatLng(location, true);
+        } else if (mLocation.getAccuracy() < mLocation.getAccuracy()) {
+            settingLatLng(location, false);
         }
     }
 
-    private void settingLocationAndDoubleLatLng(Location location) {
-        mLocation = location;
+    private void settingLatLng(Location location, boolean haveNullValue) {
+        mLocation = new Location(location);
         latitude = location.getLatitude();
         longitude = location.getLongitude();
+        if(haveNullValue) EventBus.getDefault().post(new PositionEvent(getLatLng()));
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        googleApiClientReady = true;
+        checkAndStartLocationUpdate();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    private void checkAndStartLocationUpdate() {
+        if (googleApiClientReady && permissionGranted) {
+            locationRequest = new LocationRequest();
+            locationRequest.setInterval(10000);
+            locationRequest.setFastestInterval(5000);
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            try {
+                LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+            } catch (SecurityException e) {
+                // this should not happen because the exception fires when the user has not
+                // granted permission to use location, but we already checked this
+                e.printStackTrace();
+            }
+        }
     }
 }
 
