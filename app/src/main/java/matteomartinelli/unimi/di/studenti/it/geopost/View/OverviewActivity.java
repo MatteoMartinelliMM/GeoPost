@@ -62,10 +62,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     public static final String MAP_FRAGMENT = "mapFragment";
     public static final String USERS_LIST = "usersList";
     public static final int MIN_DISTANCE = 150;
-    public static final String NO_INTERNET = "NO internet connection available :( Loading local data...";
+    public static final String NO_INTERNET = "NO internet connection available :( \n\tLoading local data...";
     public static final String NO_LOCAL_DATA = "NoLocalData";
     private FragmentManager fm;
-    private TextView mTextMessage;
     private boolean start = false;
     private BottomNavigationView navigation;
     private UsersListFragment listFragment;
@@ -81,11 +80,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     private User personalProfile;
     private RelativeLayout mainLayout;
     private UserBundleToSave userBundle;
-    private GPSTracker gpsTracker;
-    public GoogleApiClient googleApiClient;
     private ArrayList<Integer> stack;
-    private boolean toAdd = true, userPermission=false;
-    private LocationRequest locationRequest;
+    private boolean toAdd = true;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -137,33 +133,19 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         stack = new ArrayList<>();
         fm = getSupportFragmentManager();
         settingXmlWidgets();
-        gpsTracker = new GPSTracker();
         inizalizeTheFragments();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            userPermission = true;
-            return;
-        }
         friendList = new ArrayList<>();
         personalProfile = new User();
         delegate = this;
         String userCookie = UtilitySharedPreference.getSavedCookie(this);
 
-        /*googleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-
-        googleApiClient.connect();
-
-            */
         dialog = new ProgressDialog(this);
-//     if (CheckNetStatus.isInternetAvailable(this)) {
+        if (CheckNetStatus.isInternetAvailable(this)) {
             dialog.onStart();
             gettingFriendListFromServer(userCookie);
             dialog.onStart();
             gettingPersonalProfileFromServer(userCookie);
-        /*} else {
+        } else {
             dialog.onStart();
             Snackbar.make(mainLayout, NO_INTERNET, Snackbar.LENGTH_SHORT).show();
             userBundle = (UserBundleToSave) RWObject.readObject(this, USER_BUNDLE);
@@ -172,8 +154,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                 friendList = userBundle.getFriends();
                 personalProfile = userBundle.getPersonalProfile();
             } else
-                delegate.waitToComplete(NO_LOCAL_DATA); */
-        //}
+                delegate.waitToComplete(NO_LOCAL_DATA);
+        }
 
 
     }
@@ -185,7 +167,6 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     }
 
     private void settingXmlWidgets() {
-        mTextMessage = (TextView) findViewById(R.id.message);
         navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         navigation.setVisibility(View.INVISIBLE);
@@ -317,12 +298,6 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         return choice;
     }
 
-
-    public GoogleApiClient getGoogleApiClient() {
-        return googleApiClient;
-    }
-
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -330,7 +305,4 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     }
 
 
-    public LocationRequest getLocationRequest() {
-        return locationRequest;
-    }
 }

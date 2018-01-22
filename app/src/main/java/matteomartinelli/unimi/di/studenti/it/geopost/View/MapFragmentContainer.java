@@ -26,6 +26,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -125,10 +126,10 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private LocationManager locationManager;
     private Location loggedUserLocation;
     private AlertDialog alert;
+    private GoogleApiClient googleApiClient;
     private GPSTracker gpsTracker;
     private FusedLocationProviderClient fusedLocationClient;
-    private GoogleApiClient googleApiClient;
-    private PendingResult<Status> prova;
+    private boolean positionUpdate = false,permissionGranted=false, googleApiClientReady = false;;
 
     public MapFragmentContainer() {
         // Required empty public constructor
@@ -148,23 +149,47 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
+        connectTheGoogleApiClient();
+        gettingUserDataFromLocal();
         accesFineLocattionPermissionChecking();
+        checkSelfPermission();
+        if(permissionGranted)
+            checkAndStartLocationUpdate();
+
+        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
+        mapFragment.getMapAsync(this);
+        return v;
+    }
+
+    private void connectTheGoogleApiClient() {
         googleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
         googleApiClient.connect();
-        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
-        mapFragment.getMapAsync(this);
-        return v;
+    }
+
+
+    private void checkSelfPermission() {
+        if (ContextCompat.checkSelfPermission(currentActivity, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED)  {
+            Log.d("MainActivity", "Permission granted");
+            permissionGranted = true;
+        } else {
+            Log.d("MainActivity", "Permission NOT granted");
+            // we request the permission. When done,
+            // the onRequestPermissionsResult method is called
+            ActivityCompat.requestPermissions(currentActivity,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
     }
 
     private void accesFineLocattionPermissionChecking() {
         if (ContextCompat.checkSelfPermission(currentActivity,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
+            permissionGranted = true;
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(currentActivity,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -210,6 +235,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
         ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
         searchBar.setAdapter(ATVAdapter);
+        cookie = UtilitySharedPreference.getSavedCookie(context);
         usingATV();
     }
 
@@ -230,7 +256,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        gettingUserDataFromLocal();
+
     }
 
     private void gettingUserDataFromLocal() {
@@ -473,7 +499,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
 
     private void RestcallForSearchUsers(Editable editable) {
-
+        String prova = REL_URL_USERS + cookie + REL_URL_START_NAME + editable.toString();
+        String breakPoint = "bresk";
         RestCall.get(REL_URL_USERS + cookie + REL_URL_START_NAME + editable.toString(), null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -516,24 +543,33 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
         if (loggedUserLocation == null) {
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
+            settingUserCoord(location);
         } else if (loggedUserLocation.getAccuracy() < location.getAccuracy()) {
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
+            settingUserCoord(location);
         }
-        if (gMap != null) {
-            gMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("HelloMap"));
-            CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15);
+        moveCameraToMyPosition();
 
+    }
+
+    private void moveCameraToMyPosition() {
+        if(!positionUpdate) {
+            positionUpdate = true;
+            LatLng latLng = new LatLng(personalProfile.getCurrentLatitude(),personalProfile.getCurrentLongitude());
+            gMap.addMarker(new MarkerOptions().position(latLng).title("You are here =)"));
+            CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
             gMap.moveCamera(zoom);
             gMap.animateCamera(zoom);
-
         }
+    }
+
+    private void settingUserCoord(Location location) {
+        personalProfile.setCurrentLongitude(location.getLongitude());
+        personalProfile.setCurrentLatitude(location.getLatitude());
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        googleApiClientReady = true;
         checkAndStartLocationUpdate();
     }
 
@@ -548,7 +584,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     }
 
     private void checkAndStartLocationUpdate() {
-        if (googleApiClient.isConnected()) {
+        if (googleApiClientReady && permissionGranted) {
             LocationRequest mLocationRequest = new LocationRequest();
             mLocationRequest.setInterval(10000);
             mLocationRequest.setFastestInterval(5000);
