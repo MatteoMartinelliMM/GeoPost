@@ -78,8 +78,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             FragmentTransaction ft = fm.beginTransaction();
             switch (item.getItemId()) {
                 case R.id.navigation_list:
-                    //if(userChoice!=0)   restoreDefBgColor();
+                    navigation.setVisibility(View.VISIBLE);
+                    if(userChoice!=0)   restoreDefBgColor();
                     if (toAdd) pushUserChoiceInStack(R.id.navigation_list);
+                    UsersListFragment listFragment = new UsersListFragment();
                     if (start) {
                         ft.replace(R.id.fragContainer, listFragment, PROFILE + "|" + MAP_FRAGMENT);
                     } else {
@@ -98,7 +100,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                     ft.commitAllowingStateLoss();
                     return true;
                 case R.id.navigation_profile:
-                    //if(userChoice!=0) restoreDefBgColor();
+                    navigation.setVisibility(View.VISIBLE);
+                    if(userChoice!=0) restoreDefBgColor();
                     if (toAdd) pushUserChoiceInStack(R.id.navigation_profile);
                     PersonalProfileFragment profileFragment = new PersonalProfileFragment();
                     ft = fm.beginTransaction();
@@ -168,7 +171,6 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     }
 
     private void gettingPersonalProfileFromServer(String userCookie) {
-        String s = REL_URL_PROFILE + userCookie;
         RestCall.get(REL_URL_PROFILE + userCookie, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -262,9 +264,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         else if(NO_LOCAL_DATA.equals(s)) {
             Toast.makeText(this,"Data are not available",Toast.LENGTH_SHORT).show();
         }
-        /*if(userChoice!=0 && userChoice!=R.id.navigation_map){
+        if(userChoice!=0 && userChoice!=R.id.navigation_map){
             navigation.setSelectedItemId(userChoice);
-        }else*/ //TODO: vedere perchè scompare bottom nav
+        }else
             navigation.setSelectedItemId(R.id.navigation_map);
         start = true;
 
@@ -274,6 +276,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         return navigation;
     }
 
+    //GESTIONE STORICO NAVIGAZIONE FRAGMENT
     @Override
     public void onBackPressed() {
         if (stack.size() == 1)
@@ -289,6 +292,16 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         stack.add(0, selectedId);
     }
 
+    private int popCurrentUserChoiceAndTakeTheLastOne() {
+        stack.remove(0);
+        int choice = stack.get(0);
+
+        return choice;
+    }
+    //FINE GESTIONE STORICO NAVIGAZIONE FRAMENT
+
+
+    //SALVO E RECUPERO DATI DA RIPRENDERE DOPO LA ROTAZIONE DELLO SCHERMO
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         userChoice = navigation.getSelectedItemId();
@@ -299,23 +312,12 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
         userChoice =  savedInstanceState.getInt(SELECTED_FRAGMENT);
         doNotDisconnect = savedInstanceState.getBoolean(DO_NOT_DISCONNECT);
-        super.onRestoreInstanceState(savedInstanceState);
     }
+    //FINE SALVO E RECUPERO DATI DA RIPRENDERE DOPO LA ROTAZIONE DELLO SCHERMO
 
-    private int popCurrentUserChoiceAndTakeTheLastOne() {
-        stack.remove(0);
-        int choice = stack.get(0);
-
-        return choice;
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-    }
 
     @Override
     protected void onStop() {
@@ -334,7 +336,4 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) doNotDisconnect = true;
     }
 
-    public BottomNavigationView getNavigation() {
-        return navigation;
-    }
 }

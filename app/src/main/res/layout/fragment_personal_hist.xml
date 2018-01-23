@@ -20,6 +20,6 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:textAlignment="center"
-        android:textSize="48sp" />
+        android:textSize="32sp" />
 
 </RelativeLayout>

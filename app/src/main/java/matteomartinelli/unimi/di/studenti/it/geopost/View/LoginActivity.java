@@ -88,7 +88,7 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
     public void waitToComplete(String s) {
         dialog.dismiss();
         dialog.cancel();
-        if (s.equals("400"))
+        if (s.equals("400" )|| s.equals("404"))
             Toast.makeText(getApplicationContext(), "Wrong Username or Password", Toast.LENGTH_SHORT).show();
         else {
             loggedUser.setUserName(sUsername);

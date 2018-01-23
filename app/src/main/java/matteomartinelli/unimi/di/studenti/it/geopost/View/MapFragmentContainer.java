@@ -125,6 +125,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private GPSTracker gpsTracker;
     private FusedLocationProviderClient fusedLocationClient;
     private boolean positionUpdate = false,permissionGranted=false, googleApiClientReady = false;;
+    private UserState toAddInOldStatusList;
 
     public MapFragmentContainer() {
         // Required empty public constructor
@@ -313,7 +314,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 userNewStatus = userNewStatus.replace("+", " ");
                 UserState newLastState = new UserState(latitude, longitude, userNewStatus);
                 if (personalProfile.getLastState() != null) {
-                    UserState toAddInOldStatusList = personalProfile.getLastState();
+                    toAddInOldStatusList = personalProfile.getLastState();
                     personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
                 }
                 personalProfile.setLastState(newLastState);
@@ -559,7 +560,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     }
 
     @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) { //IL MIO FRAGMENT E' STATO DISTRUTTO --> RICONNETTO IL GOOGLE API CLIENT
         checkSelfPermission();
         gpsTracker = new GPSTracker(context,permissionGranted);
         super.onViewStateRestored(savedInstanceState);

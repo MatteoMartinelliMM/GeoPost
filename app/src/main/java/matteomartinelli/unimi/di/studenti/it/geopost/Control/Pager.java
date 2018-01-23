@@ -3,7 +3,6 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Control;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.View.PersonalHistFragment;
 import matteomartinelli.unimi.di.studenti.it.geopost.View.PersonalMapFragment;
