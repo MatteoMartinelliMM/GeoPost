@@ -5,4 +5,5 @@
     <color name="colorAccent">#80cbc4</color>
     <color name="hintColor">#747474</color>
     <color name="defBgColor">#fefefe</color>
+    <color name="defHoloColor">#fff3f3f3</color>
 </resources>

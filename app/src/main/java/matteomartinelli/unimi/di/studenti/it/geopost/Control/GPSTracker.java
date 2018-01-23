@@ -28,7 +28,7 @@ public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionC
     private double longitude;
     private boolean isRunning = false;
     private Location mLocation;
-    private GoogleApiClient googleApiClient;
+    private static GoogleApiClient googleApiClient;
     private Context context;
     private boolean googleApiClientReady = false, permissionGranted = false;
     private LocationRequest locationRequest;
@@ -90,13 +90,13 @@ public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionC
         mLocation = new Location(location);
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        if(haveNullValue) EventBus.getDefault().post(new PositionEvent(getLatLng()));
+        if(haveNullValue && permissionGranted) EventBus.getDefault().post(new PositionEvent(getLatLng()));
 
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        googleApiClientReady = true;
+        googleApiClientReady = googleApiClient.isConnected();
         checkAndStartLocationUpdate();
     }
 
@@ -124,6 +124,9 @@ public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionC
                 e.printStackTrace();
             }
         }
+    }
+    public static void disconnect(){
+        googleApiClient.disconnect();
     }
 }
 

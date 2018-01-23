@@ -69,9 +69,10 @@ public class LoginActivity extends AppCompatActivity implements TaskDelegate {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                if (statusCode == 400)
+                if (statusCode == 400 || statusCode == 404) {
+                    String response = new String(responseBody);
                     delegate.waitToComplete("" + statusCode);
-
+                }
             }
         });
 

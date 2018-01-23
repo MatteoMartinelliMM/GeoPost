@@ -1,37 +1,22 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.ActionBar;
 
 import android.app.ProgressDialog;
-import android.content.pm.PackageManager;
-import android.location.Location;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import java.util.ArrayList;
@@ -64,6 +49,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     public static final int MIN_DISTANCE = 150;
     public static final String NO_INTERNET = "NO internet connection available :( \n\tLoading local data...";
     public static final String NO_LOCAL_DATA = "NoLocalData";
+    public static final String DO_NOT_DISCONNECT = "DoNotDisconnect";
+    public static final String SELECTED_FRAGMENT = "SelectedFragment";
     private FragmentManager fm;
     private boolean start = false;
     private BottomNavigationView navigation;
@@ -80,8 +67,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     private User personalProfile;
     private RelativeLayout mainLayout;
     private UserBundleToSave userBundle;
+    private int userChoice = 0;
     private ArrayList<Integer> stack;
-    private boolean toAdd = true;
+    private boolean toAdd = true, doNotDisconnect = false;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -90,6 +78,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             FragmentTransaction ft = fm.beginTransaction();
             switch (item.getItemId()) {
                 case R.id.navigation_list:
+                    //if(userChoice!=0)   restoreDefBgColor();
                     if (toAdd) pushUserChoiceInStack(R.id.navigation_list);
                     if (start) {
                         ft.replace(R.id.fragContainer, listFragment, PROFILE + "|" + MAP_FRAGMENT);
@@ -99,8 +88,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                     ft.commit();
                     return true;
                 case R.id.navigation_map:
-                    mainLayout.setBackgroundColor(getResources().getColor(R.color.defBgColor));
-                    if (toAdd) pushUserChoiceInStack(R.id.navigation_map);
+                    restoreDefBgColor();
                     MapFragmentContainer mapFragment = new MapFragmentContainer();
                     ft = fm.beginTransaction();
                     if (start)
@@ -110,6 +98,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
                     ft.commitAllowingStateLoss();
                     return true;
                 case R.id.navigation_profile:
+                    //if(userChoice!=0) restoreDefBgColor();
                     if (toAdd) pushUserChoiceInStack(R.id.navigation_profile);
                     PersonalProfileFragment profileFragment = new PersonalProfileFragment();
                     ft = fm.beginTransaction();
@@ -123,6 +112,11 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             return false;
         }
     };
+
+    private void restoreDefBgColor() {
+        mainLayout.setBackgroundColor(getResources().getColor(R.color.defBgColor));
+        if (toAdd) pushUserChoiceInStack(R.id.navigation_map);
+    }
 
 
     @Override
@@ -174,6 +168,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     }
 
     private void gettingPersonalProfileFromServer(String userCookie) {
+        String s = REL_URL_PROFILE + userCookie;
         RestCall.get(REL_URL_PROFILE + userCookie, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -267,7 +262,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         else if(NO_LOCAL_DATA.equals(s)) {
             Toast.makeText(this,"Data are not available",Toast.LENGTH_SHORT).show();
         }
-        navigation.setSelectedItemId(R.id.navigation_map);
+        /*if(userChoice!=0 && userChoice!=R.id.navigation_map){
+            navigation.setSelectedItemId(userChoice);
+        }else*/ //TODO: vedere perchè scompare bottom nav
+            navigation.setSelectedItemId(R.id.navigation_map);
         start = true;
 
     }
@@ -291,6 +289,21 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         stack.add(0, selectedId);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        userChoice = navigation.getSelectedItemId();
+        outState.putInt(SELECTED_FRAGMENT,userChoice);
+        outState.putBoolean(DO_NOT_DISCONNECT,doNotDisconnect);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        userChoice =  savedInstanceState.getInt(SELECTED_FRAGMENT);
+        doNotDisconnect = savedInstanceState.getBoolean(DO_NOT_DISCONNECT);
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
     private int popCurrentUserChoiceAndTakeTheLastOne() {
         stack.remove(0);
         int choice = stack.get(0);
@@ -304,5 +317,24 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
 
     }
 
+    @Override
+    protected void onStop() {
+        GPSTracker gpsTracker = mapFragment.getGpsTracker();
+        if(gpsTracker!=null)
+            GPSTracker.disconnect();
+        doNotDisconnect = false;
+        super.onStop();
+    }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
+            doNotDisconnect = true;
+        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) doNotDisconnect = true;
+    }
+
+    public BottomNavigationView getNavigation() {
+        return navigation;
+    }
 }

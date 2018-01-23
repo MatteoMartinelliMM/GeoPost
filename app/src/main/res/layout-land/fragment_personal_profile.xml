@@ -1,24 +1,20 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:backgroundTint="@android:color/background_light"
-    tools:context="matteomartinelli.unimi.di.studenti.it.geopost.View.PersonalProfileFragment">
+    android:layout_height="match_parent">
 
-    <!-- TODO: Update blank fragment layout -->
-
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@android:color/background_light">
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
 
         <RelativeLayout
             android:id="@+id/container"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true">
+            android:layout_alignParentTop="true"
+            android:layout_weight="4">
 
             <ImageView
                 android:id="@+id/proPic"
@@ -35,16 +31,16 @@
                 android:layout_below="@+id/userState"
                 android:layout_toEndOf="@+id/proPic"
                 android:src="@drawable/map_marker"
-                android:layout_marginTop="7.5dp"/>
+                android:layout_marginTop="5dp"/>
 
             <TextView
                 android:id="@+id/userName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
+                android:layout_marginLeft="5dp"
                 android:layout_toEndOf="@+id/proPic"
                 android:text="TeoVoorhees"
-                android:layout_marginLeft="5dp"
                 android:textColor="@color/colorPrimaryDark"
                 android:textSize="18sp" />
 
@@ -54,41 +50,43 @@
                 android:layout_height="wrap_content"
                 android:layout_alignStart="@+id/userName"
                 android:layout_below="@+id/userName"
-                android:text="heibebi"
                 android:layout_marginLeft="5dp"
                 android:layout_marginTop="2.5dp"
+                android:text="heibebi"
                 android:textSize="16dp" />
 
             <TextView
                 android:id="@+id/lastPosition"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignTop="@+id/imageView4"
+                android:layout_below="@+id/userState"
                 android:layout_toEndOf="@+id/imageView4"
+                android:layout_marginTop="5dp"
                 android:text="Via Martiri delle Foibe 11, Sesto San Giovanni"
                 android:textSize="14sp" />
 
-            <android.support.design.widget.TabLayout
-                android:id="@+id/tabLayout"
+            <android.support.v7.widget.RecyclerView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_below="@+id/proPic"
                 android:layout_centerHorizontal="true">
 
-
-
-            </android.support.design.widget.TabLayout>
-
-            <android.support.v4.view.ViewPager
-                android:id="@+id/statusContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_below="@+id/tabLayout"
-                android:layout_centerHorizontal="true" />
+            </android.support.v7.widget.RecyclerView>
 
 
         </RelativeLayout>
 
-    </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="4">
 
-</FrameLayout>
+            <fragment
+                android:id="@+id/personalMap"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </RelativeLayout>
+    </LinearLayout>
+
+</RelativeLayout>

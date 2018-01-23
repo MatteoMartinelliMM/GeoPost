@@ -4,15 +4,18 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 //import android.app.Fragment;
 
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,6 +26,9 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.support.v4.app.FragmentManager;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -45,7 +51,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGOUT;
 
-public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener, TaskDelegate {
+public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener, TaskDelegate, OnMapReadyCallback{
     public static final String LOGGING_OUT = "Logging out...";
     private TextView userName, userState, lastPosition;
     private RecyclerView.LayoutManager lm;
@@ -58,6 +64,8 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     private UserBundleToSave userBundle;
     private User loggedUser;
     private TaskDelegate delegate;
+    private SupportMapFragment mapFragment;
+
 
     public PersonalProfileFragment() {
         // Required empty public constructor
@@ -78,13 +86,18 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         currentActitvity = getActivity();
         context = getActivity();
         if (currentActitvity instanceof OverviewActivity) {
-            currentActitvity.setTitle("Profile");
-            ((OverviewActivity) currentActitvity).getSupportActionBar().show();
+             if( getScreenOrientation() == Configuration.ORIENTATION_LANDSCAPE) {
+                 ((OverviewActivity) currentActitvity).getSupportActionBar().hide();
+             }else if( getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT) {
+                 currentActitvity.setTitle("Profile");
+                 ((OverviewActivity) currentActitvity).getSupportActionBar().show();
+             }
         }
 
         delegate = this;
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-        loggedUser = userBundle.getPersonalProfile();
+        if(userBundle!=null)
+            loggedUser = userBundle.getPersonalProfile();
         if (loggedUser != null) {
             userName.setText(loggedUser.getUserName());
             if(loggedUser.getLastState()!= null) {
@@ -99,7 +112,12 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
 
         dialog = new ProgressDialog(context);
         setHasOptionsMenu(true);
-        settingTabLayout();
+        if( getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT)
+            settingTabLayout();
+        else{
+            mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.personalMap);
+            mapFragment.getMapAsync(this);
+        }
         return v;
     }
 
@@ -122,7 +140,12 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        if( getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT) {
+            settingThePager();
+        }
+    }
 
+    private void settingThePager() {
         Pager adapter = new Pager(getChildFragmentManager(), tabLayout.getTabCount());
         statusContainer.setAdapter(adapter);
         statusContainer.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
@@ -144,7 +167,14 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     @Override
     public void onPause() {
         super.onPause();
-        statusContainer.setCurrentItem(0);
+        if( getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT){
+            if(statusContainer==null){
+                settingThePager();
+                settingTabLayout();
+            }
+            statusContainer.setCurrentItem(0);
+        }
+
     }
 
     @Override
@@ -207,5 +237,26 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
             startActivity(intent);
             currentActitvity.finish();
         }
+    }
+
+    public int getScreenOrientation()
+    {
+        Display getOrient = currentActitvity.getWindowManager().getDefaultDisplay();
+        int orientation = Configuration.ORIENTATION_UNDEFINED;
+        if(getOrient.getWidth()==getOrient.getHeight()){
+            orientation = Configuration.ORIENTATION_SQUARE;
+        } else{
+            if(getOrient.getWidth() < getOrient.getHeight()){
+                orientation = Configuration.ORIENTATION_PORTRAIT;
+            }else {
+                orientation = Configuration.ORIENTATION_LANDSCAPE;
+            }
+        }
+        return orientation;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+
     }
 }

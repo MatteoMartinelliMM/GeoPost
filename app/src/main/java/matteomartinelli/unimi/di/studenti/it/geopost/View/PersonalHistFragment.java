@@ -53,7 +53,8 @@ public class PersonalHistFragment extends Fragment {
         loggedUser = new User();
         context = getActivity();
         userBundleToSave = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-        loggedUser = userBundleToSave.getPersonalProfile();
+        if(userBundleToSave!=null)
+            loggedUser = userBundleToSave.getPersonalProfile();
         userStateHist = v.findViewById(R.id.userStatusList);
         noSocialLife = v.findViewById(R.id.noSocialLife);
         lm = new LinearLayoutManager(context);

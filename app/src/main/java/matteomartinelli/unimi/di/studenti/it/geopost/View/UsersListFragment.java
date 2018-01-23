@@ -129,9 +129,10 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
         friendList = new ArrayList<>();
         personalProfile = new User();
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-
-        friendList = userBundle.getFriends();
-        personalProfile = userBundle.getPersonalProfile();
+        if(userBundle!= null) {
+            friendList = userBundle.getFriends();
+            personalProfile = userBundle.getPersonalProfile();
+        }
         usernames = new ArrayList<>();
         settingTheAdapters(v);
         usingATV();

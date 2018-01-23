@@ -1,0 +1,39 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mRelative"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="matteomartinelli.unimi.di.studenti.it.geopost.View.UsersListFragment">
+
+    <!-- TODO: Update blank fragment layout -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <AutoCompleteTextView
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:background="@color/colorPrimary"
+            android:backgroundTint="@color/colorPrimary"
+            android:drawableLeft="@drawable/search"
+            android:hint="  Search"
+            android:imeOptions="flagNoExtractUi"
+            android:textAlignment="textStart"
+            android:textColor="#ffffff"
+            android:textColorHint="@color/hintColor"
+            android:maxLines="1"
+            android:inputType="text"/>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/userList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/searchBar" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

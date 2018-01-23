@@ -14,6 +14,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -143,7 +144,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settingTheContextNView(inflater, container);
-        connectTheGoogleApiClient();
         gettingUserDataFromLocal();
         accesFineLocattionPermissionChecking();
         checkSelfPermission();
@@ -153,10 +153,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapFragment);
         mapFragment.getMapAsync(this);
         return v;
-    }
-
-    private void connectTheGoogleApiClient() {
-
     }
 
 
@@ -211,7 +207,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
         if (currentActivity instanceof OverviewActivity) {
             ((OverviewActivity) currentActivity).getBar().setVisibility(View.VISIBLE);
-            ((OverviewActivity) currentActivity).getSupportActionBar().hide();
+            if(((OverviewActivity) currentActivity).getSupportActionBar().isShowing())
+                ((OverviewActivity) currentActivity).getSupportActionBar().hide();
         }
 
         dialog = new ProgressDialog(context);
@@ -544,10 +541,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         moveCameraToMyPosition(positionEvent);
     }
 
-
-
-
-
     private void moveCameraToMyPosition(PositionEvent positionEvent) {
         if(!positionUpdate && gMap!=null && gpsTracker.isReady()) {
             positionUpdate = true;
@@ -559,6 +552,17 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             gMap.moveCamera(zoom);
             gMap.animateCamera(zoom);
         }
+    }
+
+    public GPSTracker getGpsTracker() {
+        return gpsTracker;
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        checkSelfPermission();
+        gpsTracker = new GPSTracker(context,permissionGranted);
+        super.onViewStateRestored(savedInstanceState);
     }
 }
 
