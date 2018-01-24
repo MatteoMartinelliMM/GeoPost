@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
+import matteomartinelli.unimi.di.studenti.it.geopost.View.OverviewActivity;
 
 /**
  * Created by utente2.academy on 12/20/2017.
@@ -65,7 +66,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        User friend = friends.get(position);
+        final User friend = friends.get(position);
 
         String sUsername = friend.getUserName();
         String sStato = friend.getLastState().getStato();
@@ -75,6 +76,16 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
         holder.stato.setText(sStato);
         if(distance>=2)
             holder.posizione.setText("a " +String.format("%.2f",distance)+" km da te");
+        holder.singleFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                double latitude = friend.getLastState().getLatitude();
+                double longitude = friend.getLastState().getLongitude();
+                UtilitySharedPreference.saveLatLngToPass(view.getContext(),latitude,longitude);
+                OverviewActivity overviewActivity = (OverviewActivity) view.getContext();
+                overviewActivity.getBar().setSelectedItemId(R.id.navigation_map);
+            }
+        });
 
     }
 

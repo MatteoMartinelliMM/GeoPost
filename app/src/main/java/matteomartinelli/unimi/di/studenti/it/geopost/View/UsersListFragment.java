@@ -127,10 +127,9 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
         userList = v.findViewById(R.id.userList);
         lm = new LinearLayoutManager(context);
         userList.setLayoutManager(lm);
-        //TODO IMPLEMENTARE CON ULTIMA POSIZIONE
         Location personalLocation;
         gpsTracker.askForNewLocation();
-        if(gpsTracker.getLocation()!=null){
+        if(gpsTracker.getLocation()!=null && gpsTracker.isReady()){
             personalLocation = new Location(gpsTracker.getLocation());
         }else{
             personalLocation = new Location("PersonalLocation");

@@ -311,6 +311,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
         MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList);
 
+        if(UtilitySharedPreference.isMovingToASpecUser(context)){
+            LatLng latLng = UtilitySharedPreference.getSavedLatLng(context);
+            CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+            gMap.animateCamera(zoom);
+        }
+
     }
 
     @Override
@@ -549,7 +555,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Subscribe
     public void onLocationRecived(PositionEvent positionEvent){
-        moveCameraToMyPosition(positionEvent);
+        if(!UtilitySharedPreference.isMovingToASpecUser(context))
+            moveCameraToMyPosition(positionEvent);
     }
 
     private void moveCameraToMyPosition(PositionEvent positionEvent) {
@@ -560,7 +567,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             personalProfile.setCurrentLatitude(gpsTracker.getLatitude());
             gMap.addMarker(new MarkerOptions().position(latLng).title("You are here =)"));
             CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
-            gMap.moveCamera(zoom);
             gMap.animateCamera(zoom);
         }
     }
