@@ -122,8 +122,10 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private GoogleApiClient googleApiClient;
     private GPSTracker gpsTracker;
     private FusedLocationProviderClient fusedLocationClient;
-    private boolean positionUpdate = false,permissionGranted=false, googleApiClientReady = false;;
+    private boolean positionUpdate = false,permissionGranted=false;
     private OnGPSTrackerPass GPSTrackerPasser;
+    private boolean moveToUserPosition = false;
+
     public MapFragmentContainer() {
         // Required empty public constructor
     }
@@ -231,6 +233,10 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        if(UtilitySharedPreference.isMovingToASpecUser(context)) //SE L'UTENTE HA SELEZIONATO UN AMICO DALLA LISTA ALLORA MUOVI LA TELECAMERA SULL AMICO ALTRIMENTI MUOVILA SULL'UTENTE
+            moveToUserPosition = false;
+        else
+            moveToUserPosition = true;
         GPSTrackerPasser = (OnGPSTrackerPass) getActivity();
     }
 
@@ -274,6 +280,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
+                        permissionGranted = true;
                         gpsTracker.askForNewLocation();
                         break;
                     case Activity.RESULT_CANCELED:
@@ -555,7 +562,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     @Subscribe
     public void onLocationRecived(PositionEvent positionEvent){
-        if(!UtilitySharedPreference.isMovingToASpecUser(context))
+        if(moveToUserPosition)
             moveCameraToMyPosition(positionEvent);
     }
 
@@ -571,10 +578,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         }
     }
 
-    public GPSTracker getGpsTracker() {
-        return gpsTracker;
-    }
-
     @Override
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) { //IL MIO FRAGMENT E' STATO DISTRUTTO --> RICONNETTO IL GOOGLE API CLIENT
         checkSelfPermission();
@@ -582,5 +585,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         super.onViewStateRestored(savedInstanceState);
     }
 
+    public GPSTracker getGpsTracker() {
+        return gpsTracker;
+    }
 }
 

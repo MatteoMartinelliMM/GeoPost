@@ -78,12 +78,20 @@ public class UtilitySharedPreference {
             lat = Double.parseDouble(sLat);
             lng = Double.parseDouble(sLng);
         }
+        resetCameraChoice(context);
         return new LatLng(lat,lng);
     }
 
     public static boolean isMovingToASpecUser(Context context) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         return preferences.getBoolean(MOVE_THE_CAMERA, false);
+    }
+
+    private static void resetCameraChoice(Context context){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(MOVE_THE_CAMERA,false);
+        editor.commit();
     }
 
 

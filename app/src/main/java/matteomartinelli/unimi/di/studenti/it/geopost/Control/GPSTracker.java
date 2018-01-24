@@ -26,7 +26,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Model.PositionEvent;
 public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private double latitude;
     private double longitude;
-    private boolean isRunning = false;
+    private boolean giveMeLocation = true;
     private Location mLocation;
     private static GoogleApiClient googleApiClient;
     private Context context;
@@ -50,11 +50,8 @@ public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionC
     }
 
     public void askForNewLocation() {
+        giveMeLocation = true;
         checkAndStartLocationUpdate();
-    }
-
-    public boolean isRunning() {
-        return this.isRunning;
     }
 
     public LatLng getLatLng() {
@@ -90,7 +87,10 @@ public class GPSTracker implements LocationListener, GoogleApiClient.ConnectionC
         mLocation = new Location(location);
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        if(haveNullValue && permissionGranted) EventBus.getDefault().post(new PositionEvent(getLatLng()));
+        if(haveNullValue && permissionGranted && giveMeLocation){
+            EventBus.getDefault().post(new PositionEvent(getLatLng()));
+            giveMeLocation = false;
+        }
 
     }
 
