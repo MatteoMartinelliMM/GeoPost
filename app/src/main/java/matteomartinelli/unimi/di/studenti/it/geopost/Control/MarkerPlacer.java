@@ -11,6 +11,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 
 /**
  * Created by matteoma on 1/16/2018.
@@ -28,7 +29,7 @@ public class MarkerPlacer {
 
     public static void fillInTheMapWithFriendsMarkers(GoogleMap map, ArrayList<User> friendList) {
         for (User u : friendList) {
-            settingTheMarkerData(u, map, FRIENDS_STATUS);
+            settingTheMarkerData(u, map, null, FRIENDS_STATUS);
 
         }
 
@@ -36,39 +37,53 @@ public class MarkerPlacer {
 
 
     public static void addNewStatusMarker(GoogleMap map, User personalProfile) {
-        settingTheMarkerData(personalProfile, map, USER_LAST_STATUS);
+        settingTheMarkerData(personalProfile, map, null, USER_LAST_STATUS);
     }
 
     public static void fillIntTheMapWithUserStatus(GoogleMap map, User personalProfile) {
-        if(personalProfile.getLastState()!=null){
-            settingTheMarkerData(personalProfile,map,USER_LAST_STATUS);
-        }
-        if(personalProfile.getUserStates()!=null){
-            settingTheMarkerData(personalProfile,map,USER_OLD_STATUS);
+        if (personalProfile.getLastState() != null)
+            settingTheMarkerData(personalProfile, map, null, USER_LAST_STATUS);
+        if (personalProfile.getUserStates() != null) {
+            ArrayList<UserState> states = personalProfile.getUserStates();
+            for (UserState state : states) {
+                settingTheMarkerData(personalProfile, map, state, USER_OLD_STATUS);
+            }
         }
     }
 
-    private static void settingTheMarkerData(User u, GoogleMap map, int typeOfMarkersToAdd) {
-        MarkerOptions newMarkerOption;
-        latitude = u.getLastState().getLatitude();
-        longitude = u.getLastState().getLongitude();
-        latLng = new LatLng(latitude, longitude);
-        userName = u.getUserName();
-        status = u.getLastState().getStato();
-        newMarkerOption = new MarkerOptions().position(latLng).title(userName).snippet(status);
-        switch (typeOfMarkersToAdd){
-            case FRIENDS_STATUS:
-                newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                break;
-            case USER_LAST_STATUS:
-                newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
-                break;
-            case USER_OLD_STATUS:
-                newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)).alpha(0.7f);
-                break;
+    private static void settingTheMarkerData(User u, GoogleMap map, UserState state, int typeOfMarkersToAdd) {
+        if (map != null) {
+            MarkerOptions newMarkerOption;
+            if (state == null) {
+                latitude = u.getLastState().getLatitude();
+                longitude = u.getLastState().getLongitude();
+                status = u.getLastState().getStato();
+            } else {
+                latitude = state.getLatitude();
+                longitude = state.getLongitude();
+                status = state.getStato();
+            }
+            latLng = new LatLng(latitude, longitude);
+            userName = u.getUserName();
+
+            newMarkerOption = new MarkerOptions().position(latLng).title(userName).snippet(status);
+            switch (typeOfMarkersToAdd) {
+                case FRIENDS_STATUS:
+                    newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                    break;
+                case USER_LAST_STATUS:
+                    newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+                    break;
+                case USER_OLD_STATUS:
+                    newMarkerOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)).alpha(0.7f);
+                    break;
+            }
+            map.addMarker(newMarkerOption);
         }
-        map.addMarker(newMarkerOption);
     }
 
 
+    public static void addNewFriendMarker(GoogleMap gMap, User isTheNewFriend) {
+        settingTheMarkerData(isTheNewFriend,gMap,null,FRIENDS_STATUS);
+    }
 }

@@ -65,9 +65,10 @@ public class PersonalMapFragment extends Fragment implements OnMapReadyCallback 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
-        MarkerPlacer.fillIntTheMapWithUserStatus(gMap, loggedUser);
-        moveCameraToLastState(loggedUser);
-
+        if(loggedUser.getLastState()!=null) {
+            MarkerPlacer.fillIntTheMapWithUserStatus(gMap, loggedUser);
+            moveCameraToLastState(loggedUser);
+        }
     }
 
     private void moveCameraToLastState(User loggedUser) {

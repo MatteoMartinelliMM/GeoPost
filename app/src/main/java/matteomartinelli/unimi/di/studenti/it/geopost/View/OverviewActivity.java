@@ -1,7 +1,5 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
-import android.app.ActionBar;
-
 import android.app.ProgressDialog;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -19,6 +17,9 @@ import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
@@ -30,8 +31,11 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.MapFragmentRefreshMapEvent;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.RefreshEvent;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -41,7 +45,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
-public class OverviewActivity extends AppCompatActivity implements TaskDelegate,MapFragmentContainer.OnGPSTrackerPass {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate, MapFragmentContainer.OnGPSTrackerPass {
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -51,25 +55,27 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     public static final String NO_LOCAL_DATA = "NoLocalData";
     public static final String DO_NOT_DISCONNECT = "DoNotDisconnect";
     public static final String SELECTED_FRAGMENT = "SelectedFragment";
+    public static final String MAP_FRAGMENT_ADD_NEW_FRIEND = "MapFragmentAddNewFriend";
+    public static final String USERLIST_FRAGMENT_ADD_NEW_FRIEND = "UserlistFragmentAddNewFriend";
+    public static final String USERLIST_REFRESH_RECYCLER = "Userlist_Refresh_Recycler";
     private FragmentManager fm;
     private boolean start = false;
     private BottomNavigationView navigation;
-    private UsersListFragment listFragment;
-    private PersonalProfileFragment profileFragment;
-    private MapFragmentContainer mapFragment;
     private float x1, x2, y1, y2;
     private ProgressDialog dialog;
     private TaskDelegate delegate;
-    private String friendListToParse, personalProfileToParse;
+    private String friendListToParse, personalProfileToParse, userCookie;
     private ArrayList<User> friendList;
     private boolean isRecivedList = false, isRecivedProfile = false;
     private User loggedUser;
+    ArrayList<UserState> userOldStates;
     private RelativeLayout mainLayout;
+    private UserState userLastStateFromLocalData;
     private UserBundleToSave userBundle;
     private int userChoice = 0;
     private ArrayList<Integer> stack;
     private GPSTracker gpsTracker;
-    private boolean toAdd = true, doNotDisconnect = false;
+    private boolean toAdd = true, doNotDisconnect = false, sendEvent = false, moveCameraToAddedUser = true;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -79,7 +85,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             switch (item.getItemId()) {
                 case R.id.navigation_list:
                     navigation.setVisibility(View.VISIBLE);
-                    if(userChoice!=0)   restoreDefBgColor();
+                    if (userChoice != 0) restoreDefBgColor();
                     if (toAdd) pushUserChoiceInStack(R.id.navigation_list);
                     UsersListFragment listFragment = new UsersListFragment();
                     if (start) {
@@ -101,7 +107,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
                     return true;
                 case R.id.navigation_profile:
                     navigation.setVisibility(View.VISIBLE);
-                    if(userChoice!=0) restoreDefBgColor();
+                    if (userChoice != 0) restoreDefBgColor();
                     if (toAdd) pushUserChoiceInStack(R.id.navigation_profile);
                     PersonalProfileFragment profileFragment = new PersonalProfileFragment();
                     ft = fm.beginTransaction();
@@ -116,6 +122,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         }
     };
 
+
     private void restoreDefBgColor() {
         mainLayout.setBackgroundColor(getResources().getColor(R.color.defBgColor));
         if (toAdd) pushUserChoiceInStack(R.id.navigation_map);
@@ -128,13 +135,14 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         getSupportActionBar().hide();
         setContentView(R.layout.activity_overview);
         stack = new ArrayList<>();
+        EventBus.getDefault().register(this);
         fm = getSupportFragmentManager();
         settingXmlWidgets();
-        inizalizeTheFragments();
-        friendList = new ArrayList<>();
-        loggedUser = new User();
+        inizalizeUserData();
+
         delegate = this;
-        String userCookie = UtilitySharedPreference.getSavedCookie(this);
+
+        readUserDataFromInternalStorage();
 
         dialog = new ProgressDialog(this);
         if (CheckNetStatus.isInternetAvailable(this)) {
@@ -142,26 +150,32 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             gettingFriendListFromServer(userCookie);
             dialog.onStart();
             gettingPersonalProfileFromServer(userCookie);
-        } else {
-            dialog.onStart();
+        } else if (userBundle != null)
             Snackbar.make(mainLayout, NO_INTERNET, Snackbar.LENGTH_SHORT).show();
-            userBundle = (UserBundleToSave) RWObject.readObject(this, USER_BUNDLE);
-            if (userBundle != null) {
-                delegate.waitToComplete("");
-                friendList = userBundle.getFriends();
-                loggedUser = userBundle.getPersonalProfile();
-            } else
-                delegate.waitToComplete(NO_LOCAL_DATA);
+        else
+            Snackbar.make(mainLayout, "No local data available :(", Snackbar.LENGTH_SHORT).show();
+
+
+    }
+
+    private void readUserDataFromInternalStorage() {
+        userCookie = UtilitySharedPreference.getSavedCookie(this);
+        userBundle = (UserBundleToSave) RWObject.readObject(this, USER_BUNDLE);
+        if (userBundle != null) {
+            friendList = userBundle.getFriends();
+            loggedUser = userBundle.getPersonalProfile();
+            userOldStates = loggedUser.getUserStates();
+            userLastStateFromLocalData = loggedUser.getLastState();
         }
-
-
     }
 
-    private void inizalizeTheFragments() {
-        listFragment = new UsersListFragment();
-        profileFragment = new PersonalProfileFragment();
-        mapFragment = new MapFragmentContainer();
+    private void inizalizeUserData() {
+        friendList = new ArrayList<>();
+        loggedUser = new User();
+        userOldStates = new ArrayList<>();
+        userLastStateFromLocalData = new UserState();
     }
+
 
     private void settingXmlWidgets() {
         navigation = (BottomNavigationView) findViewById(R.id.navigation);
@@ -254,22 +268,32 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         dialog.cancel();
         if (s.equals("200") && isRecivedList && isRecivedProfile) {
             friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, loggedUser);
-            userBundle = new UserBundleToSave();
-            userBundle.setFriends(friendList);
-            userBundle.setPersonalProfile(loggedUser);
+            preparingTheUserDataToSave();
             RWObject.writeObject(this, USER_BUNDLE, userBundle);
+            if (sendEvent) {
+                EventBus.getDefault().post(new MapFragmentRefreshMapEvent("FriendIsAdded"));
+                moveCameraToAddedUser = true;
+                sendEvent = false;
+            }
 
         } else if (!s.equals("200"))
             Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
-        else if(NO_LOCAL_DATA.equals(s)) {
-            Toast.makeText(this,"Data are not available",Toast.LENGTH_SHORT).show();
-        }
-        if(userChoice!=0 && userChoice!=R.id.navigation_map){
+
+        if (userChoice != 0 && userChoice != R.id.navigation_map) { //La selezione del tab dipende da quale fragment stava utilizzando l'utente prima di ruotare lo schermo
             navigation.setSelectedItemId(userChoice);
-        }else
+        } else
             navigation.setSelectedItemId(R.id.navigation_map);
         start = true;
 
+    }
+
+    private void preparingTheUserDataToSave() {
+        userBundle = new UserBundleToSave();
+        userBundle.setFriends(friendList);  //SE LO STATO SUL SERVER E' PIU aggiornato metto lo stato che era considerato "ultimo" in cima alla lista dei vecchi stati dell' utente (riga sotto)
+        if (loggedUser.getLastState().getStato() != userLastStateFromLocalData.getStato() || loggedUser.getLastState().getLongitude() != userLastStateFromLocalData.getLongitude())
+            loggedUser.addTheNewOldStatusOnTopOfTheList(userLastStateFromLocalData);
+        loggedUser.setUserStates(userOldStates);
+        userBundle.setPersonalProfile(loggedUser);
     }
 
     public BottomNavigationView getBar() {
@@ -305,15 +329,15 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         userChoice = navigation.getSelectedItemId();
-        outState.putInt(SELECTED_FRAGMENT,userChoice);
-        outState.putBoolean(DO_NOT_DISCONNECT,doNotDisconnect);
+        outState.putInt(SELECTED_FRAGMENT, userChoice);
+        outState.putBoolean(DO_NOT_DISCONNECT, doNotDisconnect);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        userChoice =  savedInstanceState.getInt(SELECTED_FRAGMENT);
+        userChoice = savedInstanceState.getInt(SELECTED_FRAGMENT);
         doNotDisconnect = savedInstanceState.getBoolean(DO_NOT_DISCONNECT);
     }
     //FINE SALVO E RECUPERO DATI DA RIPRENDERE DOPO LA ROTAZIONE DELLO SCHERMO
@@ -321,8 +345,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
     @Override
     protected void onStop() {
+        MapFragmentContainer mapFragment = new MapFragmentContainer();
         GPSTracker gpsTracker = mapFragment.getGpsTracker();
-        if(gpsTracker!=null)
+        if (gpsTracker != null)
             GPSTracker.disconnect();
         doNotDisconnect = false;
         super.onStop();
@@ -333,7 +358,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         super.onConfigurationChanged(newConfig);
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
             doNotDisconnect = true;
-        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) doNotDisconnect = true;
+        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
+            doNotDisconnect = true;
     }
 
     @Override
@@ -343,5 +369,26 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
     public GPSTracker getGpsTracker() {
         return gpsTracker;
+    }
+
+    public boolean moveCameraToAddedUser() {
+        return moveCameraToAddedUser;
+    }
+
+    @Subscribe
+    public void refreshUserList(RefreshEvent typeOfRefresh) {
+        String refreshType = typeOfRefresh.refreshType;
+        switch (refreshType) {
+            case MAP_FRAGMENT_ADD_NEW_FRIEND:
+                gettingFriendListFromServer(userCookie);
+                sendEvent = true;
+                break;
+            case USERLIST_FRAGMENT_ADD_NEW_FRIEND:
+                break;
+            case USERLIST_REFRESH_RECYCLER:
+                break;
+            default:
+                break;
+        }
     }
 }

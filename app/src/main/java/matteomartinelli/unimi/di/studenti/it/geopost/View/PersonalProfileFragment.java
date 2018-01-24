@@ -181,7 +181,8 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
             if (loggedUser.getUserStates() != null) {
                 userHist = v.findViewById(R.id.personalHist);
                 lm = new LinearLayoutManager(context);
-                adapter = new UserStateAdapter(loggedUser.getUserStates(), context);
+                ArrayList<UserState> oldStates = loggedUser.getUserStates();
+                adapter = new UserStateAdapter(oldStates, context);
                 userHist.setLayoutManager(lm);
                 userHist.setAdapter(adapter);
             }
@@ -303,7 +304,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
         MarkerPlacer.fillIntTheMapWithUserStatus(gMap, loggedUser);
-        moveCameraToLastState(loggedUser);
+         moveCameraToLastState(loggedUser);
 
     }
 

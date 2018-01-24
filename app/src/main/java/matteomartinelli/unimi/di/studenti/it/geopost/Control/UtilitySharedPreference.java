@@ -23,6 +23,7 @@ public class UtilitySharedPreference {
     public static final String LATITUDE = "Latitude";
     public static final String LONGITUDE = "Longitude";
     public static final String MOVE_THE_CAMERA = "MoveTheCamera";
+    public static final String ADDED_FRIEND = "AddedFriend";
 
 
     public static boolean checkIfUserIsLogged(Context context) {
@@ -78,13 +79,26 @@ public class UtilitySharedPreference {
             lat = Double.parseDouble(sLat);
             lng = Double.parseDouble(sLng);
         }
-        resetCameraChoice(context);
+        resetCameraChoice(context); //RIPORTO LA VAR DI CONTROLLO SCELTA POSIZIONAMENTO CAMERA A FALSE
         return new LatLng(lat,lng);
     }
 
     public static boolean isMovingToASpecUser(Context context) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         return preferences.getBoolean(MOVE_THE_CAMERA, false);
+    }
+
+    public static void saveAddedFriendName(Context context, String username){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(ADDED_FRIEND,username);
+        editor.commit();
+
+    }
+
+    public static String getAddedFriendName(Context context){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return  preferences.getString(ADDED_FRIEND,"");
     }
 
     private static void resetCameraChoice(Context context){
