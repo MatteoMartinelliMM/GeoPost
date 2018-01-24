@@ -13,65 +13,79 @@
         android:layout_height="wrap_content"
         android:backgroundTint="@android:color/background_light">
 
+        <android.support.v7.widget.CardView
+            android:id="@+id/cardView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="5dp"
+            app:cardElevation="5dp"
+            app:contentPadding="5dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/proPic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:src="@drawable/propic" />
+
+                <TextView
+                    android:id="@+id/userName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginLeft="5dp"
+                    android:layout_toEndOf="@+id/proPic"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/userState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignStart="@+id/userName"
+                    android:layout_below="@+id/userName"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginTop="2.5dp"
+                    android:textSize="16dp" />
+
+                <TextView
+                    android:id="@+id/lastPosition"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@+id/imageView4"
+                    android:layout_toEndOf="@+id/imageView4"
+                    android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/imageView4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/userState"
+                    android:layout_marginTop="7.5dp"
+                    android:layout_toEndOf="@+id/proPic"
+                    android:src="@drawable/map_marker" />
+            </RelativeLayout>
+
+        </android.support.v7.widget.CardView>
+
         <RelativeLayout
             android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true">
-
-            <ImageView
-                android:id="@+id/proPic"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:src="@drawable/propic" />
-
-            <ImageView
-                android:id="@+id/imageView4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/userState"
-                android:layout_toEndOf="@+id/proPic"
-                android:src="@drawable/map_marker"
-                android:layout_marginTop="7.5dp"/>
-
-            <TextView
-                android:id="@+id/userName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_toEndOf="@+id/proPic"
-                android:layout_marginLeft="5dp"
-                android:textColor="@color/colorPrimaryDark"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/userState"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignStart="@+id/userName"
-                android:layout_below="@+id/userName"
-                android:layout_marginLeft="5dp"
-                android:layout_marginTop="2.5dp"
-                android:textSize="16dp" />
-
-            <TextView
-                android:id="@+id/lastPosition"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignTop="@+id/imageView4"
-                android:layout_toEndOf="@+id/imageView4"
-                android:textSize="14sp" />
+            android:layout_below="@+id/cardView2">
 
             <android.support.design.widget.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/proPic"
-                android:layout_centerHorizontal="true">
-
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true">
 
 
             </android.support.design.widget.TabLayout>

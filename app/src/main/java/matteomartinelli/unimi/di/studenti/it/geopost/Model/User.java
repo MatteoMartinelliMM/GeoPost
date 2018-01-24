@@ -28,6 +28,7 @@ public class User implements Serializable, Comparable<User> {
     }
 
     public User() {
+        userStates = new ArrayList<>();
     }
 
     public String getUserName() {
@@ -63,9 +64,7 @@ public class User implements Serializable, Comparable<User> {
     }
 
     public void addTheNewOldStatusOnTopOfTheList(UserState newOld){
-        if(userStates==null)
-            userStates = new ArrayList<>();
-        userStates.add(0,newOld);
+         userStates.add(0,newOld);
     }
 
     public double getCurrentLatitude() {

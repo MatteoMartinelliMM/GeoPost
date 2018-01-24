@@ -41,7 +41,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
-public class OverviewActivity extends AppCompatActivity implements TaskDelegate {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate,MapFragmentContainer.OnGPSTrackerPass {
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -58,17 +58,17 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
     private PersonalProfileFragment profileFragment;
     private MapFragmentContainer mapFragment;
     private float x1, x2, y1, y2;
-    private ActionBar actionBar;
     private ProgressDialog dialog;
     private TaskDelegate delegate;
     private String friendListToParse, personalProfileToParse;
     private ArrayList<User> friendList;
     private boolean isRecivedList = false, isRecivedProfile = false;
-    private User personalProfile;
+    private User loggedUser;
     private RelativeLayout mainLayout;
     private UserBundleToSave userBundle;
     private int userChoice = 0;
     private ArrayList<Integer> stack;
+    private GPSTracker gpsTracker;
     private boolean toAdd = true, doNotDisconnect = false;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -132,7 +132,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         settingXmlWidgets();
         inizalizeTheFragments();
         friendList = new ArrayList<>();
-        personalProfile = new User();
+        loggedUser = new User();
         delegate = this;
         String userCookie = UtilitySharedPreference.getSavedCookie(this);
 
@@ -149,7 +149,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             if (userBundle != null) {
                 delegate.waitToComplete("");
                 friendList = userBundle.getFriends();
-                personalProfile = userBundle.getPersonalProfile();
+                loggedUser = userBundle.getPersonalProfile();
             } else
                 delegate.waitToComplete(NO_LOCAL_DATA);
         }
@@ -176,7 +176,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200) {
                     personalProfileToParse = new String(responseBody);
-                    personalProfile = JSONParser.getPersonalProfile(personalProfileToParse);
+                    loggedUser = JSONParser.getPersonalProfile(personalProfileToParse);
                     isRecivedProfile = true;
                 }
                 delegate.waitToComplete("" + statusCode);
@@ -253,10 +253,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         dialog.dismiss();
         dialog.cancel();
         if (s.equals("200") && isRecivedList && isRecivedProfile) {
-            friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, personalProfile);
+            friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, loggedUser);
             userBundle = new UserBundleToSave();
             userBundle.setFriends(friendList);
-            userBundle.setPersonalProfile(personalProfile);
+            userBundle.setPersonalProfile(loggedUser);
             RWObject.writeObject(this, USER_BUNDLE, userBundle);
 
         } else if (!s.equals("200"))
@@ -336,4 +336,12 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate 
         else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) doNotDisconnect = true;
     }
 
+    @Override
+    public void onGPSTrackerPass(GPSTracker gpsTracker) {
+        this.gpsTracker = gpsTracker;
+    }
+
+    public GPSTracker getGpsTracker() {
+        return gpsTracker;
+    }
 }

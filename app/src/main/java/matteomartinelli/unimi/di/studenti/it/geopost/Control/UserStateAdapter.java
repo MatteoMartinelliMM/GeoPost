@@ -63,13 +63,7 @@ public class UserStateAdapter extends RecyclerView.Adapter<UserStateAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        if (position == 0) {
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0,0);
-            holder.itemView.setLayoutParams(params);
-            holder.itemView.setVisibility(View.GONE);
-            holder.itemView.setVisibility(View.INVISIBLE);
-            return;
-        }
+
         UserState stato = states.get(position);
         String sStato = stato.getStato();
         LatLng latLng = new LatLng(stato.getLatitude(),stato.getLongitude());

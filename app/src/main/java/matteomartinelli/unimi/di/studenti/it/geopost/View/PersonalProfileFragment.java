@@ -75,6 +75,8 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     private RecyclerView userHist;
     private UserStateAdapter adapter;
     private LinearLayoutManager lm;
+    private UserStateAdapter userStateAdapter;
+    private ArrayList<UserState> userStates;
 
 
     public PersonalProfileFragment() {
@@ -103,9 +105,16 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
                 ((OverviewActivity) currentActitvity).getSupportActionBar().show();
             }
         }
-
-        delegate = this;
         settingUserBio();
+        if (loggedUser.getUserStates() != null) {
+
+            userStates = loggedUser.getUserStates();
+            userStateAdapter = new UserStateAdapter(userStates, context);
+            delegate = this;
+        }
+
+
+
 
         dialog = new ProgressDialog(context);
         setHasOptionsMenu(true);
@@ -113,8 +122,21 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         return v;
     }
 
+    private void init(){
+        UserState a = new UserState();
+        a.setStato("ciao");
+        a.setLongitude(44.33336);
+        a.setLongitude(5.666666);
+        userStates.add(a);
+        a.setStato("bo");
+        a.setLatitude(66.33333);
+        a.setLongitude(6.44444);
+        userStates.add(a);
+    }
+
     private void settingUserBio() {
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
+        loggedUser = new User();
         if (userBundle != null)
             loggedUser = userBundle.getPersonalProfile();
         if (loggedUser != null) {
@@ -192,7 +214,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     @Override
     public void onPause() {
         super.onPause();
-
+        settingUserBio();
 
     }
 
@@ -294,5 +316,9 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
             gMap.moveCamera(zoom);
             gMap.animateCamera(zoom);
         }
+    }
+
+    public UserStateAdapter getAdapter() {
+        return adapter;
     }
 }

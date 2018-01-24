@@ -1,18 +1,18 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context="matteomartinelli.unimi.di.studenti.it.geopost.View.PersonalHistFragment">
 
     <!-- TODO: Update blank fragment layout -->
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/userStatusList"
+        android:id="@+id/myOldStatus"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
     </android.support.v7.widget.RecyclerView>
-
+    <!---
     <TextView
         android:id="@+id/noSocialLife"
         android:layout_width="wrap_content"
@@ -21,5 +21,5 @@
         android:layout_centerVertical="true"
         android:textAlignment="center"
         android:textSize="32sp" />
-
-</RelativeLayout>
+    -->
+</FrameLayout>

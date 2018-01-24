@@ -25,18 +25,16 @@ public class Pager extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch (position){
             case 0:
-                if(personalHistFragment == null){
-                    personalHistFragment = new PersonalHistFragment();
-                }
+                personalHistFragment = new PersonalHistFragment();
+
                 return personalHistFragment;
 
             case 1:
-                if(personalMapFragment == null){
-                    personalMapFragment = new PersonalMapFragment();
-                }
+                personalMapFragment = new PersonalMapFragment();
+
                 return personalMapFragment;
 
-                default:
+            default:
                 return null;
 
         }

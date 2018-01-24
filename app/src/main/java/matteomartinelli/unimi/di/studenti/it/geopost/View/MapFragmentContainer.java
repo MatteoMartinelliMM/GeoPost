@@ -1,7 +1,6 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -14,7 +13,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -125,10 +123,13 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private GPSTracker gpsTracker;
     private FusedLocationProviderClient fusedLocationClient;
     private boolean positionUpdate = false,permissionGranted=false, googleApiClientReady = false;;
-    private UserState toAddInOldStatusList;
-
+    private OnGPSTrackerPass GPSTrackerPasser;
     public MapFragmentContainer() {
         // Required empty public constructor
+    }
+
+    public interface OnGPSTrackerPass {
+         void onGPSTrackerPass(GPSTracker gpsTracker);
     }
 
 
@@ -230,7 +231,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
+        GPSTrackerPasser = (OnGPSTrackerPass) getActivity();
     }
 
     @Override
@@ -244,6 +245,13 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         super.onActivityCreated(savedInstanceState);
 
 
+    }
+
+    @Override
+    public void onPause() {
+        if(gpsTracker.isReady())
+            GPSTrackerPasser.onGPSTrackerPass(gpsTracker);
+        super.onPause();
     }
 
     private void gettingUserDataFromLocal() {
@@ -311,9 +319,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         dialog.cancel();
         switch (restCall) {
             case ADD_STATUS:
+                UserState toAddInOldStatusList;
                 userNewStatus = userNewStatus.replace("+", " ");
                 UserState newLastState = new UserState(latitude, longitude, userNewStatus);
                 if (personalProfile.getLastState() != null) {
+                    userBundle = (UserBundleToSave) RWObject.readObject(context,USER_BUNDLE);
+                    personalProfile = userBundle.getPersonalProfile();
                     toAddInOldStatusList = personalProfile.getLastState();
                     personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
                 }
@@ -462,7 +473,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200)
                     delegate.waitToComplete(ADD_STATUS);
-                delegate.waitToComplete(ADD_STATUS);
             }
 
             @Override
@@ -565,5 +575,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         gpsTracker = new GPSTracker(context,permissionGranted);
         super.onViewStateRestored(savedInstanceState);
     }
+
 }
 

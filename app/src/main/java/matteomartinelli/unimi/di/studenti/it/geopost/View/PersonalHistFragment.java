@@ -19,6 +19,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.UserStateAdapter;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
 import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
@@ -30,8 +31,9 @@ public class PersonalHistFragment extends Fragment {
     private User loggedUser;
     private UserBundleToSave userBundleToSave;
     private RecyclerView userStateHist;
-    private LinearLayoutManager lm;
+    private RecyclerView.LayoutManager lm;
     private TextView noSocialLife;
+    private ArrayList<UserState> userStates;
 
     public PersonalHistFragment() {
         // Required empty public constructor
@@ -53,11 +55,13 @@ public class PersonalHistFragment extends Fragment {
         loggedUser = new User();
         context = getActivity();
         userBundleToSave = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-        PersonalProfileFragment parent = (PersonalProfileFragment) getParentFragment();
-        loggedUser = parent.getLoggedUser();
-        userStateHist = v.findViewById(R.id.userStatusList);
-        noSocialLife = v.findViewById(R.id.noSocialLife);
-        lm = new LinearLayoutManager(context);
+        if (userBundleToSave != null)
+            loggedUser = userBundleToSave.getPersonalProfile();
+        userStateHist = v.findViewById(R.id.myOldStatus);
+
+
+        String breakPoint = " Alb";
+
 
         return v;
     }
@@ -65,14 +69,31 @@ public class PersonalHistFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if (loggedUser.getUserStates() != null) {
-            userStateAdapter = new UserStateAdapter(loggedUser.getUserStates(), context);
+        PersonalProfileFragment parent = (PersonalProfileFragment) getParentFragment();
+        userStates = new ArrayList<>();
+        init();
+        userStateAdapter = parent.getAdapter();
+        if (userStateAdapter != null && userStates != null) {
+            lm = new LinearLayoutManager(context);
+
+            userStateAdapter = new UserStateAdapter(userStates, context);
             userStateHist.setLayoutManager(lm);
             userStateHist.setAdapter(userStateAdapter);
-        } else if(loggedUser.getLastState() != null) noSocialLife.setText(":(\nSeems you didn't post anything");
+        }//else if(loggedUser.getLastState() != null) noSocialLife.setText(":(\nSeems you didn't post anything");
+        //noSocialLife = v.findViewById(R.id.noSocialLife);
 
     }
-
+    private void init(){
+        UserState a = new UserState();
+        a.setStato("ciao");
+        a.setLongitude(44.33336);
+        a.setLongitude(5.666666);
+        userStates.add(a);
+        a.setStato("bo");
+        a.setLatitude(66.33333);
+        a.setLongitude(6.44444);
+        userStates.add(a);
+    }
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);

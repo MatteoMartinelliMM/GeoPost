@@ -46,6 +46,7 @@ public class PersonalMapFragment extends Fragment implements OnMapReadyCallback 
         personalMapFragment.getMapAsync(this);
         PersonalProfileFragment parent = (PersonalProfileFragment) getParentFragment();
         loggedUser = parent.getLoggedUser();
+
         return v;
     }
 
