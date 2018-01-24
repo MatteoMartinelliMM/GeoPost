@@ -75,7 +75,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     private int userChoice = 0;
     private ArrayList<Integer> stack;
     private GPSTracker gpsTracker;
-    private boolean toAdd = true, doNotDisconnect = false, sendEvent = false, moveCameraToAddedUser = true;
+    private boolean toAdd = true, doNotDisconnect = false, sendEvent = false, moveCameraToAddedUser = false;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -139,7 +139,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         fm = getSupportFragmentManager();
         settingXmlWidgets();
         inizalizeUserData();
-
+        loggedUser = new User();
         delegate = this;
 
         readUserDataFromInternalStorage();
@@ -147,7 +147,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         dialog = new ProgressDialog(this);
         if (CheckNetStatus.isInternetAvailable(this)) {
             dialog.onStart();
-            gettingFriendListFromServer(userCookie);
+            gettingFriendListFromServer(userCookie,null);
             dialog.onStart();
             gettingPersonalProfileFromServer(userCookie);
         } else if (userBundle != null)
@@ -203,13 +203,13 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         });
     }
 
-    private void gettingFriendListFromServer(String userCookie) {
+    private void gettingFriendListFromServer(String userCookie, final String savedUsername) {
         RestCall.get(REL_URL_FOLLOWER + userCookie, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200) {
                     friendListToParse = new String(responseBody);
-                    friendList = (ArrayList<User>) JSONParser.getFollowedUsers(friendListToParse);
+                    friendList = (ArrayList<User>) JSONParser.getFollowedUsers(friendListToParse,savedUsername,getApplication());
                     isRecivedList = true;
                 }
                 delegate.waitToComplete(statusCode + "");
@@ -271,8 +271,12 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             preparingTheUserDataToSave();
             RWObject.writeObject(this, USER_BUNDLE, userBundle);
             if (sendEvent) {
-                EventBus.getDefault().post(new MapFragmentRefreshMapEvent("FriendIsAdded"));
-                moveCameraToAddedUser = true;
+                int position = UtilitySharedPreference.getAddedFriendListPosition(this);
+                if(position > -1) {
+                    User u = friendList.get(position);
+                    EventBus.getDefault().post(new MapFragmentRefreshMapEvent(u,position));
+                    moveCameraToAddedUser = true;
+                }
                 sendEvent = false;
             }
 
@@ -289,9 +293,11 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
     private void preparingTheUserDataToSave() {
         userBundle = new UserBundleToSave();
-        userBundle.setFriends(friendList);  //SE LO STATO SUL SERVER E' PIU aggiornato metto lo stato che era considerato "ultimo" in cima alla lista dei vecchi stati dell' utente (riga sotto)
-        if (loggedUser.getLastState().getStato() != userLastStateFromLocalData.getStato() || loggedUser.getLastState().getLongitude() != userLastStateFromLocalData.getLongitude())
-            loggedUser.addTheNewOldStatusOnTopOfTheList(userLastStateFromLocalData);
+        userBundle.setFriends(friendList);
+        if(loggedUser.getLastState()!= null ) {//SE LO STATO SUL SERVER E' PIU aggiornato metto lo stato che era considerato "ultimo" in cima alla lista dei vecchi stati dell' utente (riga sotto)
+            if (loggedUser.getLastState().getStato() != userLastStateFromLocalData.getStato() || loggedUser.getLastState().getLongitude() != userLastStateFromLocalData.getLongitude())
+                loggedUser.addTheNewOldStatusOnTopOfTheList(userLastStateFromLocalData);
+        }
         loggedUser.setUserStates(userOldStates);
         userBundle.setPersonalProfile(loggedUser);
     }
@@ -380,7 +386,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         String refreshType = typeOfRefresh.refreshType;
         switch (refreshType) {
             case MAP_FRAGMENT_ADD_NEW_FRIEND:
-                gettingFriendListFromServer(userCookie);
+                String savedNewFriendName = UtilitySharedPreference.getAddedFriendName(this);
+                gettingFriendListFromServer(userCookie,savedNewFriendName);
                 sendEvent = true;
                 break;
             case USERLIST_FRAGMENT_ADD_NEW_FRIEND:

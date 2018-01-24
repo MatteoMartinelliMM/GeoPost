@@ -24,6 +24,7 @@ public class UtilitySharedPreference {
     public static final String LONGITUDE = "Longitude";
     public static final String MOVE_THE_CAMERA = "MoveTheCamera";
     public static final String ADDED_FRIEND = "AddedFriend";
+    public static final String ADDED_FRIEND_POSITION = "AddedFriendPosition";
 
 
     public static boolean checkIfUserIsLogged(Context context) {
@@ -109,5 +110,15 @@ public class UtilitySharedPreference {
     }
 
 
+    public static void saveAddedFriendListPosition(Context context, int count) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(ADDED_FRIEND_POSITION,count);
+        editor.commit();
+    }
 
+    public static int getAddedFriendListPosition(Context context){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.getInt(ADDED_FRIEND_POSITION,-1);
+    }
 }

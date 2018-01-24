@@ -5,9 +5,12 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Model;
  */
 
 public class MapFragmentRefreshMapEvent {
-    public final String doRefresh;
+    public final User u;
+    public final int position;
 
-    public MapFragmentRefreshMapEvent(String doRefresh) {
-        this.doRefresh = doRefresh;
+
+    public MapFragmentRefreshMapEvent(User u,int position) {
+        this.u = u;
+        this.position = position;
     }
 }
