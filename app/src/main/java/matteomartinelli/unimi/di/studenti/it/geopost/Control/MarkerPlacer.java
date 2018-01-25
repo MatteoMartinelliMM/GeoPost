@@ -29,13 +29,17 @@ public class MarkerPlacer {
     private static String userName;
     private static String status;
 
-    public static void fillInTheMapWithFriendsMarkers(GoogleMap map, ArrayList<User> friendList, String addedFriendName) {
+    public static boolean fillInTheMapWithFriendsMarkers(GoogleMap map, ArrayList<User> friendList, String addedFriendName) {
+        boolean haveToMoveCameraOnAddedUser = false;
         for (User u : friendList) {
 
             settingTheMarkerData(u, map, null, FRIENDS_STATUS);
-            if (u.getUserName().equals(addedFriendName))
+            if (u.getUserName().equals(addedFriendName)) {
                 moveCameraToAddedUser(map, u);
+                haveToMoveCameraOnAddedUser = true;
+            }
         }
+        return haveToMoveCameraOnAddedUser;
 
     }
 

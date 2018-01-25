@@ -255,17 +255,6 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        /*if (gpsTracker.isReady()) { //TODO check if work
-            preparingTheUserDataToSave();
-            if(doSorting){
-                friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, loggedUser,gpsTracker);
-                preparingTheUserDataToSave();
-                RWObject.writeObject(context, USER_BUNDLE, userBundle);
-                doSorting=false;
-            }
-
-        }*/
-
     }
 
     @Override
@@ -330,12 +319,15 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
-        MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList, UtilitySharedPreference.getAddedFriendName(context));
+        boolean isMovedToADifferentLocation = MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList, UtilitySharedPreference.getAddedFriendName(context));
         if (UtilitySharedPreference.isMovingToASpecUser(context)) {
             LatLng latLng = UtilitySharedPreference.getSavedLatLng(context);
             CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
             gMap.animateCamera(zoom);
         }
+        if(isMovedToADifferentLocation) moveToAddedUser = false;
+
+
 
     }
 
@@ -417,18 +409,19 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
 
     private void sendTheNewStatusToServer() {
         userNewStatus = newStatus.getText().toString();
-        userNewStatus = userNewStatus.replace(" ", "+");
-        String cookie = UtilitySharedPreference.getSavedCookie(context);
-        gpsTracker.askForNewLocation();
-        loggedUser.setCurrentLatitude(gpsTracker.getLatitude());
-        loggedUser.setCurrentLongitude(gpsTracker.getLongitude());
-        latitude = loggedUser.getCurrentLatitude();
-        longitude = loggedUser.getCurrentLongitude();
-        String sLatitude = String.valueOf(latitude);
-        String sLongitude = String.valueOf(longitude);
-        dialog.onStart();
-        RestCallAddStatus(cookie, sLatitude, sLongitude);
-
+        if(userNewStatus!=null ) {
+            userNewStatus = userNewStatus.replace(" ", "+");
+            String cookie = UtilitySharedPreference.getSavedCookie(context);
+            gpsTracker.askForNewLocation();
+            loggedUser.setCurrentLatitude(gpsTracker.getLatitude());
+            loggedUser.setCurrentLongitude(gpsTracker.getLongitude());
+            latitude = loggedUser.getCurrentLatitude();
+            longitude = loggedUser.getCurrentLongitude();
+            String sLatitude = String.valueOf(latitude);
+            String sLongitude = String.valueOf(longitude);
+            dialog.onStart();
+            RestCallAddStatus(cookie, sLatitude, sLongitude);
+        }
     }
 
 
@@ -580,6 +573,14 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     public void onLocationRecived(PositionEvent positionEvent) {
         if (moveToUserPosition)
             moveCameraToMyPosition(positionEvent);
+        else{
+            moveToAddedUser = false;
+            loggedUser.setCurrentLongitude(gpsTracker.getLongitude());
+            loggedUser.setCurrentLatitude(gpsTracker.getLatitude());
+            LatLng latLng = gpsTracker.getLatLng();
+            gMap.addMarker(new MarkerOptions().position(latLng).title("You are here =)"));
+
+        }
     }
 
     private void moveCameraToMyPosition(PositionEvent positionEvent) {

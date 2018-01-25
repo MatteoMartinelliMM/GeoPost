@@ -92,13 +92,16 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
 
         currentActivity = getActivity();
         context = getActivity();
-        final LocationManager manager = (LocationManager) currentActivity.getSystemService( Context.LOCATION_SERVICE );
+        if (currentActivity instanceof OverviewActivity)
+            gpsTracker = ((OverviewActivity) currentActivity).getGpsTracker();
+        final LocationManager manager = (LocationManager) currentActivity.getSystemService(Context.LOCATION_SERVICE);
 
-        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             buildAlertMessageNoGps();
         }
-        if(currentActivity instanceof OverviewActivity) {
-            currentActivity.setTitle("Friend list");;
+        if (currentActivity instanceof OverviewActivity) {
+            currentActivity.setTitle("Friend list");
+            ;
             ((OverviewActivity) currentActivity).getSupportActionBar().hide();
             gpsTracker = ((OverviewActivity) currentActivity).getGpsTracker();
         }
@@ -111,7 +114,7 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
         friendList = new ArrayList<>();
         looggedUser = new User();
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-        if(userBundle!= null) {
+        if (userBundle != null) {
             friendList = userBundle.getFriends();
             looggedUser = userBundle.getPersonalProfile();
         }
@@ -128,17 +131,21 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
         lm = new LinearLayoutManager(context);
         userList.setLayoutManager(lm);
         Location personalLocation;
-        gpsTracker.askForNewLocation();
-        if(gpsTracker.getLocation()!=null && gpsTracker.isReady()){
-            personalLocation = new Location(gpsTracker.getLocation());
-        }else{
-            personalLocation = new Location("PersonalLocation");
-            personalLocation.setLatitude(looggedUser.getCurrentLatitude());
-            personalLocation.setLongitude(looggedUser.getCurrentLongitude());
+        if(gpsTracker!=null) {
+            gpsTracker.askForNewLocation();
+            if (gpsTracker.getLocation() != null && gpsTracker.isReady()) {
+                personalLocation = new Location(gpsTracker.getLocation());
+            } else {
+                personalLocation = new Location("PersonalLocation");
+                personalLocation.setLatitude(looggedUser.getCurrentLatitude());
+                personalLocation.setLongitude(looggedUser.getCurrentLongitude());
+            }
+            userListAdapter = new UserListAdapter(friendList, personalLocation);
+            userList.setAdapter(userListAdapter);
+        }else if(!friendList.isEmpty()) {
+            if(currentActivity instanceof OverviewActivity) //TODO: event che da map ritorna qua
+                ((OverviewActivity) currentActivity).getBar().setSelectedItemId(R.id.navigation_map);
         }
-
-        userListAdapter = new UserListAdapter(friendList, personalLocation);
-        userList.setAdapter(userListAdapter);
 
         //ATV ADAPTER
         ATVAdapter = new AutoCompleteTextViewAdapter(context, R.layout.suggestion_element, usernames);
@@ -236,7 +243,7 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200) {
                     String toParse = new String(responseBody);
-                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse,friendList);
+                    usernames = (ArrayList<String>) JSONParser.getUsernameToFollow(toParse, friendList);
                 }
 
                 delegate.waitToComplete(SEARCH_FRIEND);
@@ -271,6 +278,7 @@ public class UsersListFragment extends Fragment implements TaskDelegate {
         }
 
     }
+
     private void buildAlertMessageNoGps() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")

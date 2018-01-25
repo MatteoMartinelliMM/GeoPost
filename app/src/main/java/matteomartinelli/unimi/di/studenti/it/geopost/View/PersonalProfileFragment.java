@@ -1,9 +1,11 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 //import android.app.Fragment;
@@ -11,7 +13,9 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -41,6 +45,7 @@ import java.util.ArrayList;
 
 
 import cz.msebera.android.httpclient.Header;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.GPSTracker;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Geocoding;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.MarkerPlacer;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.Pager;
@@ -56,6 +61,7 @@ import matteomartinelli.unimi.di.studenti.it.geopost.R;
 
 import static matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject.USER_BUNDLE;
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_LOGOUT;
+import static matteomartinelli.unimi.di.studenti.it.geopost.View.MapFragmentContainer.MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 
 public class PersonalProfileFragment extends Fragment implements TabLayout.OnTabSelectedListener, TaskDelegate, OnMapReadyCallback {
     public static final String LOGGING_OUT = "Logging out...";
@@ -75,19 +81,28 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     private RecyclerView userHist;
     private UserStateAdapter adapter;
     private LinearLayoutManager lm;
+    private GPSTracker gpsTracker;
     private UserStateAdapter userStateAdapter;
     private ArrayList<UserState> userStates;
+    private OnGPSTrackerPassFromProfile trackerProfile;
+    private boolean permissionGranted = false;
 
 
     public PersonalProfileFragment() {
         // Required empty public constructor
     }
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
     }
+
+    public interface OnGPSTrackerPassFromProfile {
+        void onGPSTrackerPassProfile(GPSTracker gpsTracker);
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -100,10 +115,15 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         if (currentActitvity instanceof OverviewActivity) {
             if (getScreenOrientation() == Configuration.ORIENTATION_LANDSCAPE) {
                 ((OverviewActivity) currentActitvity).getSupportActionBar().hide();
+                gpsTracker = ((OverviewActivity) currentActitvity).getGpsTracker();
+
             } else if (getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT) {
                 currentActitvity.setTitle("Profile");
                 ((OverviewActivity) currentActitvity).getSupportActionBar().show();
+                gpsTracker = ((OverviewActivity) currentActitvity).getGpsTracker();
+
             }
+
         }
         settingUserBio();
         if (loggedUser.getUserStates() != null) {
@@ -114,25 +134,12 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
         }
 
 
-
-
         dialog = new ProgressDialog(context);
         setHasOptionsMenu(true);
 
         return v;
     }
 
-    private void init(){
-        UserState a = new UserState();
-        a.setStato("ciao");
-        a.setLongitude(44.33336);
-        a.setLongitude(5.666666);
-        userStates.add(a);
-        a.setStato("bo");
-        a.setLatitude(66.33333);
-        a.setLongitude(6.44444);
-        userStates.add(a);
-    }
 
     private void settingUserBio() {
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
@@ -194,7 +201,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     }
 
     private void settingThePager() {
-        Log.i("Ali",""+tabLayout.getTabCount() );
+        Log.i("Ali", "" + tabLayout.getTabCount());
         Pager adapter = new Pager(getChildFragmentManager(), tabLayout.getTabCount());
         statusContainer.setAdapter(adapter);
         statusContainer.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
@@ -205,6 +212,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        trackerProfile = (OnGPSTrackerPassFromProfile) getActivity();
 
     }
 
@@ -218,6 +226,14 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     public void onPause() {
         super.onPause();
         settingUserBio();
+        OverviewActivity overviewActivity;
+        if(getScreenOrientation() == Configuration.ORIENTATION_LANDSCAPE) {
+            checkSelfPermission();
+            gpsTracker = new GPSTracker(context,permissionGranted);
+
+        }
+        if (gpsTracker != null && gpsTracker.isReady())
+            trackerProfile.onGPSTrackerPassProfile(gpsTracker);
 
     }
 
@@ -325,4 +341,18 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     public UserStateAdapter getAdapter() {
         return adapter;
     }
+    private void checkSelfPermission() {
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Log.d("MainActivity", "Permission granted");
+            permissionGranted = true;
+        } else {
+            Log.d("MainActivity", "Permission NOT granted");
+            // we request the permission. When done,
+            // the onRequestPermissionsResult method is called
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
+    }
+
 }

@@ -73,7 +73,7 @@ public class PersonalHistFragment extends Fragment {
         userStates = new ArrayList<>();
         userStates = loggedUser.getUserStates();
         userStateAdapter = new UserStateAdapter(userStates,getContext());
-        if (userStateAdapter != null && userStates != null) {
+        if (userStateAdapter != null && userStates != null ) {
             lm = new LinearLayoutManager(context);
 
             userStateAdapter = new UserStateAdapter(userStates, context);

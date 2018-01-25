@@ -48,7 +48,7 @@ import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLCon
 import static matteomartinelli.unimi.di.studenti.it.geopost.Model.RelativeURLConstants.REL_URL_PROFILE;
 
 
-public class OverviewActivity extends AppCompatActivity implements TaskDelegate, MapFragmentContainer.OnGPSTrackerPass {
+public class OverviewActivity extends AppCompatActivity implements TaskDelegate, MapFragmentContainer.OnGPSTrackerPass,PersonalProfileFragment.OnGPSTrackerPassFromProfile {
 
     public static final String PROFILE = "profile";
     public static final String MAP_FRAGMENT = "mapFragment";
@@ -409,5 +409,10 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
 
     public boolean isSendEvent() {
         return sendEvent;
+    }
+
+    @Override
+    public void onGPSTrackerPassProfile(GPSTracker gpsTracker) {
+        this.gpsTracker = gpsTracker;
     }
 }
