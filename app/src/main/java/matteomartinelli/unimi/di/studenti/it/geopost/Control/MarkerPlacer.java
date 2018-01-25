@@ -1,5 +1,7 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.Control;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -27,10 +29,12 @@ public class MarkerPlacer {
     private static String userName;
     private static String status;
 
-    public static void fillInTheMapWithFriendsMarkers(GoogleMap map, ArrayList<User> friendList) {
+    public static void fillInTheMapWithFriendsMarkers(GoogleMap map, ArrayList<User> friendList, String addedFriendName) {
         for (User u : friendList) {
-            settingTheMarkerData(u, map, null, FRIENDS_STATUS);
 
+            settingTheMarkerData(u, map, null, FRIENDS_STATUS);
+            if (u.getUserName().equals(addedFriendName))
+                moveCameraToAddedUser(map, u);
         }
 
     }
@@ -49,6 +53,10 @@ public class MarkerPlacer {
                 settingTheMarkerData(personalProfile, map, state, USER_OLD_STATUS);
             }
         }
+    }
+
+    public static void addNewFriendMarker(GoogleMap gMap, User isTheNewFriend) {
+        settingTheMarkerData(isTheNewFriend, gMap, null, FRIENDS_STATUS);
     }
 
     private static void settingTheMarkerData(User u, GoogleMap map, UserState state, int typeOfMarkersToAdd) {
@@ -83,7 +91,10 @@ public class MarkerPlacer {
     }
 
 
-    public static void addNewFriendMarker(GoogleMap gMap, User isTheNewFriend) {
-        settingTheMarkerData(isTheNewFriend,gMap,null,FRIENDS_STATUS);
+    private static void moveCameraToAddedUser(GoogleMap gMap, User isTheNewFriend) {
+        LatLng latLng = new LatLng(isTheNewFriend.getLastState().getLatitude(), isTheNewFriend.getLastState().getLongitude());
+        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+        gMap.animateCamera(zoom);
+
     }
 }

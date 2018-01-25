@@ -2,8 +2,6 @@ package matteomartinelli.unimi.di.studenti.it.geopost.Control;
 
 import android.content.Context;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,7 +29,6 @@ public class JSONParser {
     private static double latitude;
     private static double longitude;
     private static boolean isEmptyUser = false;
-    private static Context context;
     public static User getPersonalProfile(String toParse) {
         User u = new User();
         UserState userState = new UserState();
@@ -41,7 +38,7 @@ public class JSONParser {
             while (userFileds.hasNext()) {
                 if (!isEmptyUser) {
                     String userField = userFileds.next();
-                    fillInTheUserField(u, userState, userToParse, userField,null,0);
+                    fillInTheUserField(u, userState, userToParse, userField,null,0,null,false);
                 } else break;
 
             }
@@ -77,14 +74,13 @@ public class JSONParser {
 
     public static List<User> getFollowedUsers(String toParse, String savedUsername, Context context) {
         isEmptyUser = false;
-        context = context;
         List friendList = new ArrayList();
         JSONArray JSONfriendList;
         int count=0;
         try {
             JSONObject temp = new JSONObject(toParse);
             JSONfriendList = temp.getJSONArray(FOLLOWED);
-            parsingUserByUser(friendList, JSONfriendList,count,savedUsername);
+            parsingUserByUser(friendList, JSONfriendList,count,savedUsername,context);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -92,7 +88,7 @@ public class JSONParser {
         return friendList;
     }
 
-    private static void parsingUserByUser(List friendList, JSONArray JSONfriendList,int count,String savedUsername) throws JSONException {
+    private static void parsingUserByUser(List friendList, JSONArray JSONfriendList,int count,String savedUsername,Context context) throws JSONException {
         boolean found = false;
         for (int i = 0; i < JSONfriendList.length(); i++) {
             isEmptyUser = false;
@@ -104,7 +100,7 @@ public class JSONParser {
             while (userFileds.hasNext()) {
                 if (!isEmptyUser) {
                     String userField = userFileds.next();
-                    fillInTheUserField(u, userState, JSONSingleUser, userField,savedUsername,count);
+                    fillInTheUserField(u, userState, JSONSingleUser, userField,savedUsername,count, context,found);
                 } else break;
 
             }
@@ -114,12 +110,14 @@ public class JSONParser {
         }
     }
 
-    private static void fillInTheUserField(User u, UserState userState, JSONObject JSONSingleUser, String userField,String savedUsername,int count) throws JSONException {
+    private static void fillInTheUserField(User u, UserState userState, JSONObject JSONSingleUser, String userField,String savedUsername,int count, Context context,boolean found) throws JSONException {
 
         switch (userField) {
             case USER_FIELD_NAME:
                 String userName = JSONSingleUser.getString(userField);
-                if(savedUsername!=null && savedUsername.equals(userName))   UtilitySharedPreference.saveAddedFriendListPosition(context, count);
+
+                if(savedUsername!=null && savedUsername.equals(userName))
+                    found = true;
                 u.setUserName(userName);
                 break;
             case USER_FIELD_MSG:
@@ -142,6 +140,8 @@ public class JSONParser {
                 u.setLastState(userState);
                 break;
 
+
         }
+
     }
 }

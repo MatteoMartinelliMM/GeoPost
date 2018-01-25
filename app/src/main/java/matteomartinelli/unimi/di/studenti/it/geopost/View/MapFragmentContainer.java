@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 
 import android.location.LocationManager;
 import android.os.Build;
@@ -36,9 +35,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -57,6 +53,7 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.AutoCompleteTextViewAdapter;
+import matteomartinelli.unimi.di.studenti.it.geopost.Control.CalculateFriendsDistance;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.GPSTracker;
 
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.JSONParser;
@@ -66,11 +63,9 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.MapFragmentRefreshMapEvent;
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.MapIsReadyEvent;
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.MapsAndAddedUserAreReady;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.PositionEvent;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.RefreshEvent;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.TrackerIsReady;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
@@ -111,7 +106,9 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     public static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private FloatingActionButton addStatus;
     private UserBundleToSave userBundle;
-    private User personalProfile, isTheNewFriend;
+    private User loggedUser;
+    private UserState userLastStateFromLocalData;
+    private ArrayList<UserState> userOldStates;
     private RelativeLayout mRelative;
     private PopupWindow addStatusPopUp;
     private EditText newStatus;
@@ -124,7 +121,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private String cookie;
     private AlertDialog alert;
     private GPSTracker gpsTracker;
-    private boolean positionUpdate = false, permissionGranted = false, moveToSelectedUser = false, moveToAddedUser = false, find = false;
+    private boolean positionUpdate = false, permissionGranted = false, moveToSelectedUser = false, moveToAddedUser = false, find = false,doSorting = true;
     private OnGPSTrackerPass GPSTrackerPasser;
     private boolean moveToUserPosition = false;
     private AlertDialog.Builder builder;
@@ -241,7 +238,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         super.onAttach(context);
         OverviewActivity overviewActivity = (OverviewActivity) context;
         moveToSelectedUser = UtilitySharedPreference.isMovingToASpecUser(context);
-        moveToAddedUser = overviewActivity.moveCameraToAddedUser();
+        moveToAddedUser = overviewActivity.isSendEvent();
         if (moveToAddedUser || moveToSelectedUser) //SE L'UTENTE HA SELEZIONATO UN AMICO DALLA LISTA ALLORA MUOVI LA TELECAMERA SULL AMICO ALTRIMENTI MUOVILA SULL'UTENTE
             moveToUserPosition = false;
         else
@@ -258,7 +255,16 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        /*if (gpsTracker.isReady()) { //TODO check if work
+            preparingTheUserDataToSave();
+            if(doSorting){
+                friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, loggedUser,gpsTracker);
+                preparingTheUserDataToSave();
+                RWObject.writeObject(context, USER_BUNDLE, userBundle);
+                doSorting=false;
+            }
 
+        }*/
 
     }
 
@@ -272,12 +278,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     private void gettingUserDataFromLocal() {
         userBundle = new UserBundleToSave();
         friendList = new ArrayList<>();
-        personalProfile = new User();
+        loggedUser = new User();
         userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
 
         if (userBundle != null) {
             friendList = userBundle.getFriends();
-            personalProfile = userBundle.getPersonalProfile();
+            loggedUser = userBundle.getPersonalProfile();
         }
     }
 
@@ -324,14 +330,12 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
-
-        MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList);
+        MarkerPlacer.fillInTheMapWithFriendsMarkers(gMap, friendList, UtilitySharedPreference.getAddedFriendName(context));
         if (UtilitySharedPreference.isMovingToASpecUser(context)) {
             LatLng latLng = UtilitySharedPreference.getSavedLatLng(context);
             CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
             gMap.animateCamera(zoom);
         }
-        if(moveToAddedUser) moveCameraToAddedUser();
 
     }
 
@@ -344,16 +348,16 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 UserState toAddInOldStatusList;
                 userNewStatus = userNewStatus.replace("+", " ");
                 UserState newLastState = new UserState(latitude, longitude, userNewStatus);
-                if (personalProfile.getLastState() != null) {
+                if (loggedUser.getLastState() != null) {
                     userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
-                    personalProfile = userBundle.getPersonalProfile();
-                    toAddInOldStatusList = personalProfile.getLastState();
-                    personalProfile.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
+                    loggedUser = userBundle.getPersonalProfile();
+                    toAddInOldStatusList = loggedUser.getLastState();
+                    loggedUser.addTheNewOldStatusOnTopOfTheList(toAddInOldStatusList);
                 }
-                personalProfile.setLastState(newLastState);
-                userBundle.setPersonalProfile(personalProfile);
+                loggedUser.setLastState(newLastState);
+                userBundle.setPersonalProfile(loggedUser);
                 RWObject.writeObject(context, USER_BUNDLE, userBundle);
-                MarkerPlacer.addNewStatusMarker(gMap, personalProfile);
+                MarkerPlacer.addNewStatusMarker(gMap, loggedUser);
                 addStatusPopUp.dismiss();
                 break;
 
@@ -369,15 +373,7 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
                 searchBar.clearComposingText();
                 EventBus.getDefault().post(new RefreshEvent(MAP_FRAGMENT_ADD_NEW_FRIEND));
                 break;
-            case GO_TO_ADDED_USER:
-                if (isTheNewFriend != null && find) {
-                    MarkerPlacer.addNewFriendMarker(gMap, isTheNewFriend);
-                    LatLng latLng = new LatLng(isTheNewFriend.getCurrentLatitude(), isTheNewFriend.getCurrentLongitude());
-                    CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
-                    gMap.animateCamera(zoom);
-                    moveToAddedUser = false;
-                }
-                break;
+
             default:
                 Toast.makeText(context, restCall, Toast.LENGTH_SHORT).show();
 
@@ -424,10 +420,10 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         userNewStatus = userNewStatus.replace(" ", "+");
         String cookie = UtilitySharedPreference.getSavedCookie(context);
         gpsTracker.askForNewLocation();
-        personalProfile.setCurrentLatitude(gpsTracker.getLatitude());
-        personalProfile.setCurrentLongitude(gpsTracker.getLongitude());
-        latitude = personalProfile.getCurrentLatitude();
-        longitude = personalProfile.getCurrentLongitude();
+        loggedUser.setCurrentLatitude(gpsTracker.getLatitude());
+        loggedUser.setCurrentLongitude(gpsTracker.getLongitude());
+        latitude = loggedUser.getCurrentLatitude();
+        longitude = loggedUser.getCurrentLongitude();
         String sLatitude = String.valueOf(latitude);
         String sLongitude = String.valueOf(longitude);
         dialog.onStart();
@@ -590,8 +586,8 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         if (!positionUpdate && gMap != null && gpsTracker.isReady()) {
             positionUpdate = true;
             LatLng latLng = positionEvent.latLng;
-            personalProfile.setCurrentLongitude(gpsTracker.getLongitude());
-            personalProfile.setCurrentLatitude(gpsTracker.getLatitude());
+            loggedUser.setCurrentLongitude(gpsTracker.getLongitude());
+            loggedUser.setCurrentLatitude(gpsTracker.getLatitude());
             gMap.addMarker(new MarkerOptions().position(latLng).title("You are here =)"));
             CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
             gMap.animateCamera(zoom);
@@ -609,20 +605,23 @@ public class MapFragmentContainer extends Fragment implements OnMapReadyCallback
         return gpsTracker;
     }
 
-    @Subscribe
-    public void onServerDataUpdated(MapFragmentRefreshMapEvent event) {
-        isTheNewFriend = new User();
-        isTheNewFriend = event.u;
-        int positionToAdd = event.position;
-        friendList.add(positionToAdd,isTheNewFriend);
-    }
+    private void preparingTheUserDataToSave() {
+        userBundle = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
+        if (userBundle != null) {
+            friendList = userBundle.getFriends();
+            loggedUser = userBundle.getPersonalProfile();
+            userOldStates = loggedUser.getUserStates();
+            userLastStateFromLocalData = loggedUser.getLastState();
+        }
 
-    private void moveCameraToAddedUser(){
-        MarkerPlacer.addNewFriendMarker(gMap, isTheNewFriend);
-        LatLng latLng = new LatLng(isTheNewFriend.getCurrentLatitude(), isTheNewFriend.getCurrentLongitude());
-        CameraUpdate zoom = CameraUpdateFactory.newLatLngZoom(latLng, 15);
-        gMap.animateCamera(zoom);
-        moveToAddedUser = false;
+        userBundle = new UserBundleToSave();
+        userBundle.setFriends(friendList);
+        if (loggedUser.getLastState() != null) {//SE LO STATO SUL SERVER E' PIU aggiornato metto lo stato che era considerato "ultimo" in cima alla lista dei vecchi stati dell' utente (riga sotto)
+            if (loggedUser.getLastState().getStato() != userLastStateFromLocalData.getStato() || loggedUser.getLastState().getLongitude() != userLastStateFromLocalData.getLongitude())
+                loggedUser.addTheNewOldStatusOnTopOfTheList(userLastStateFromLocalData);
+        }
+        loggedUser.setUserStates(userOldStates);
+        userBundle.setPersonalProfile(loggedUser);
     }
 
 }

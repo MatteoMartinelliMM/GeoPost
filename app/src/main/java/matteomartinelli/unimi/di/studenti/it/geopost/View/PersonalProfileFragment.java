@@ -160,6 +160,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
             tabLayout.addTab(tabLayout.newTab().setText("History"));
             tabLayout.addTab(tabLayout.newTab().setText("Map"));
             tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
         }
 
     }
@@ -193,6 +194,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     }
 
     private void settingThePager() {
+        Log.i("Ali",""+tabLayout.getTabCount() );
         Pager adapter = new Pager(getChildFragmentManager(), tabLayout.getTabCount());
         statusContainer.setAdapter(adapter);
         statusContainer.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
@@ -268,6 +270,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
 
     @Override
     public void onTabUnselected(TabLayout.Tab tab) {
+        statusContainer.setCurrentItem(0);
 
     }
 
@@ -304,7 +307,7 @@ public class PersonalProfileFragment extends Fragment implements TabLayout.OnTab
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
         MarkerPlacer.fillIntTheMapWithUserStatus(gMap, loggedUser);
-         moveCameraToLastState(loggedUser);
+        moveCameraToLastState(loggedUser);
 
     }
 

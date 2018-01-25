@@ -18,12 +18,12 @@ public class CalculateFriendsDistance {
     public static final String FRIEND_LOCATION = "FRIEND LOCATION";
     public static final String LOGGED_USER_LOCATION = "loggedUserLocation";
 
-    public static ArrayList<User> settingForEachUserTheDistanceAndSortTheList(ArrayList<User> friendList, User loggedUser) {
+    public static ArrayList<User> settingForEachUserTheDistanceAndSortTheList(ArrayList<User> friendList, User loggedUser, GPSTracker gpsTracker) {
         for (int i = 0; i < friendList.size(); i++) {
             User u = friendList.get(i);
             float distance;
 
-            distance = getFriendDistance(u, loggedUser);
+            distance = getFriendDistance(u, loggedUser,gpsTracker);
             friendList.get(i).getLastState().setDistanceToLoggedUser(distance);
 
         }
@@ -33,7 +33,7 @@ public class CalculateFriendsDistance {
 
     }
 
-    private static float getFriendDistance(User friend, User loggedUser) {
+    private static float getFriendDistance(User friend, User loggedUser,GPSTracker gpsTracker) {
         double friendLatitude = friend.getLastState().getLatitude();
         double friendLongitude = friend.getLastState().getLongitude();
        /* double loggedUserLongitude = loggedUser.getLastState().getLatitude();
@@ -42,8 +42,8 @@ public class CalculateFriendsDistance {
         Location loggedUserLocation = new Location(LOGGED_USER_LOCATION);
         friendLocation.setLongitude(friendLongitude);
         friendLocation.setLatitude(friendLatitude);
-        loggedUserLocation.setLongitude(9.254575);
-        loggedUserLocation.setLatitude(45.547676);
+        loggedUserLocation.setLongitude(gpsTracker.getLongitude());
+        loggedUserLocation.setLatitude(gpsTracker.getLatitude());
         return loggedUserLocation.distanceTo(friendLocation);
     }
 }

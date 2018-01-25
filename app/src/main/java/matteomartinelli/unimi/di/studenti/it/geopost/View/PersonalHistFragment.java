@@ -53,7 +53,7 @@ public class PersonalHistFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_personal_hist, container, false);
         userBundleToSave = new UserBundleToSave();
         loggedUser = new User();
-        context = getActivity();
+        context = getContext();
         userBundleToSave = (UserBundleToSave) RWObject.readObject(context, USER_BUNDLE);
         if (userBundleToSave != null)
             loggedUser = userBundleToSave.getPersonalProfile();
@@ -71,8 +71,8 @@ public class PersonalHistFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         PersonalProfileFragment parent = (PersonalProfileFragment) getParentFragment();
         userStates = new ArrayList<>();
-        init();
-        userStateAdapter = parent.getAdapter();
+        userStates = loggedUser.getUserStates();
+        userStateAdapter = new UserStateAdapter(userStates,getContext());
         if (userStateAdapter != null && userStates != null) {
             lm = new LinearLayoutManager(context);
 
@@ -83,7 +83,8 @@ public class PersonalHistFragment extends Fragment {
         //noSocialLife = v.findViewById(R.id.noSocialLife);
 
     }
-    private void init(){
+
+    private void init() {
         UserState a = new UserState();
         a.setStato("ciao");
         a.setLongitude(44.33336);
@@ -94,9 +95,12 @@ public class PersonalHistFragment extends Fragment {
         a.setLongitude(6.44444);
         userStates.add(a);
     }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
+
 
     }
 

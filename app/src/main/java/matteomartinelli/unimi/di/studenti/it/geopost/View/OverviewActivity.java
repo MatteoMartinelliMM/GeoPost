@@ -1,6 +1,8 @@
 package matteomartinelli.unimi.di.studenti.it.geopost.View;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -31,8 +33,9 @@ import matteomartinelli.unimi.di.studenti.it.geopost.Control.RWObject;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.RestCall;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.TaskDelegate;
 import matteomartinelli.unimi.di.studenti.it.geopost.Control.UtilitySharedPreference;
-import matteomartinelli.unimi.di.studenti.it.geopost.Model.MapFragmentRefreshMapEvent;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.DataAreReadyEvent;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.RefreshEvent;
+import matteomartinelli.unimi.di.studenti.it.geopost.Model.TrackerIsReady;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.User;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserBundleToSave;
 import matteomartinelli.unimi.di.studenti.it.geopost.Model.UserState;
@@ -75,7 +78,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     private int userChoice = 0;
     private ArrayList<Integer> stack;
     private GPSTracker gpsTracker;
-    private boolean toAdd = true, doNotDisconnect = false, sendEvent = false, moveCameraToAddedUser = false;
+    private boolean toAdd = true, doNotDisconnect = false, sendEvent = false, moveCameraToAddedUser = false, isReady=false,doSorting=true;
+    private Context context;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -129,10 +133,13 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     }
 
 
+    @SuppressLint("RestrictedApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().setShowHideAnimationEnabled(true);
         getSupportActionBar().hide();
+        context = this;
         setContentView(R.layout.activity_overview);
         stack = new ArrayList<>();
         EventBus.getDefault().register(this);
@@ -209,7 +216,7 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if (statusCode == 200) {
                     friendListToParse = new String(responseBody);
-                    friendList = (ArrayList<User>) JSONParser.getFollowedUsers(friendListToParse,savedUsername,getApplication());
+                    friendList = (ArrayList<User>) JSONParser.getFollowedUsers(friendListToParse,savedUsername,context);
                     isRecivedList = true;
                 }
                 delegate.waitToComplete(statusCode + "");
@@ -267,19 +274,8 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         dialog.dismiss();
         dialog.cancel();
         if (s.equals("200") && isRecivedList && isRecivedProfile) {
-            friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, loggedUser);
             preparingTheUserDataToSave();
             RWObject.writeObject(this, USER_BUNDLE, userBundle);
-            if (sendEvent) {
-                int position = UtilitySharedPreference.getAddedFriendListPosition(this);
-                if(position > -1) {
-                    User u = friendList.get(position);
-                    EventBus.getDefault().post(new MapFragmentRefreshMapEvent(u,position));
-                    moveCameraToAddedUser = true;
-                }
-                sendEvent = false;
-            }
-
         } else if (!s.equals("200"))
             Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
 
@@ -371,6 +367,12 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
     @Override
     public void onGPSTrackerPass(GPSTracker gpsTracker) {
         this.gpsTracker = gpsTracker;
+        if(doSorting){
+            friendList = CalculateFriendsDistance.settingForEachUserTheDistanceAndSortTheList(friendList, loggedUser,gpsTracker);
+            userBundle.setFriends(friendList);
+            RWObject.writeObject(this, USER_BUNDLE, userBundle);
+            doSorting=false;
+        }
     }
 
     public GPSTracker getGpsTracker() {
@@ -386,9 +388,9 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
         String refreshType = typeOfRefresh.refreshType;
         switch (refreshType) {
             case MAP_FRAGMENT_ADD_NEW_FRIEND:
+                sendEvent=true;
                 String savedNewFriendName = UtilitySharedPreference.getAddedFriendName(this);
                 gettingFriendListFromServer(userCookie,savedNewFriendName);
-                sendEvent = true;
                 break;
             case USERLIST_FRAGMENT_ADD_NEW_FRIEND:
                 break;
@@ -397,5 +399,15 @@ public class OverviewActivity extends AppCompatActivity implements TaskDelegate,
             default:
                 break;
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+    }
+
+    public boolean isSendEvent() {
+        return sendEvent;
     }
 }
